@@ -360,7 +360,7 @@ end
 ########################################################
 
 
-spec = deserialize("IsingExactLevels.data")
+spec = deserialize("IsingExactLevels")
 const global exact_degeneracies = Int64.(spec[1, :]);
 const global exact_levels = spec[2, :];
 const global exact_spectrum_max_number_of_levels = sum(exact_degeneracies);
@@ -384,7 +384,7 @@ end
 
 
 
-spec = deserialize("IsingEvenExactLevels.data")
+spec = deserialize("IsingEvenExactLevels")
 const global exact_degeneracies_even = Int64.(spec[1, :]);
 const global exact_levels_even = spec[2, :];
 const global exact_spectrum_max_number_of_levels_even = sum(exact_degeneracies_even);

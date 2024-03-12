@@ -3,8 +3,8 @@
 
 # Julia project files
 *.toml
+*.log
+*.pdf
+*.data
 
 
-#results of experiments
-out/*
-trajectories/*
