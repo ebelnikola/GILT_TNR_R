@@ -1,0 +1,10 @@
+#folders:
+.vscode/
+
+# Julia project files
+*.toml
+
+
+#results of experiments
+out/*
+trajectories/*

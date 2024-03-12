@@ -1,0 +1,17 @@
+2023-11-16 11:24:40 I: 
+                       ======================================================================
+                       Running GiltTNR2D_Ising_benchmarks with the following parameters:
+                       beta = 0.2
+                       cg_chis = range(0, 50)
+                       cg_eps = 1e-10
+                       gilt_eps = 1e-7
+                       log_dir = logs/scaldims
+                       print_freeenergy = True
+                       print_scaldims = 50
+                       print_spectra = True
+                       symmetry_tensors = True
+                       total_iters = 9
+                       verbosity = 100
+2023-11-16 11:24:40 I: 
+                       Iteration 1
+2023-11-16 11:24:40 I: Applying Gilt,                      
