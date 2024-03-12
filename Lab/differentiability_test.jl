@@ -6,11 +6,72 @@
 # - TEST FUNCTIONS IN A CONVINIENT FORM
 # - COMPUTE DERIVATIVES
 # - CAUCHY CRITERION
-# - CHECKING THE TRG LOWEST SINGULAR VALUE
-# - SPECTRUM PLOTTING SUITE
+
+
+################################################
+# section: EXPERIMENT INIT
+################################################
+
+using ArgParse
+
+settings = ArgParseSettings()
+@add_arg_table! settings begin
+    "--chi"
+    help = "The bond dimension"
+    arg_type = Int64
+    default = 10
+    "--relT"
+    help = "The realtive temperature of the initial tensor"
+    arg_type = Float64
+    default = 1.0
+    "--number_of_initial_steps"
+    help = "Number of RG steps made to get an approximation of the critical tensor"
+    arg_type = Int64
+    default = 4
+    "--cg_eps"
+    help = "The threshold used in TRG steps to truncate the bonds"
+    arg_type = Float64
+    default = 1e-10
+    "--rotate"
+    help = "If true the algorithm will perform a rotation by 90 degrees after each GILT TNR step"
+    arg_type = Bool
+    default = false
+    "--ord"
+    help = "Order of differentiation algorithm"
+    arg_type = Int64
+    default = 2
+    "--N"
+    help = "Number of randomised tests"
+    arg_type = Int64
+    default = 2
+end
+
+pars = parse_args(settings; as_symbols=true)
+for (key, value) in pars
+    @eval $key = $value
+end
+
+
 
 include("../Tools.jl");
 include("../GaugeFixing.jl");
+
+
+out_path = "out/chi=$chi"
+gilt_eps = deserialize(out_path * "/optimal_eps_and_its_error.data")[1]
+
+gilt_pars = Dict(
+    "gilt_eps" => gilt_eps,
+    "cg_chis" => collect(1:chi),
+    "cg_eps" => cg_eps,
+    "verbosity" => 0,
+    "rotate" => rotate
+)
+
+A_crit_approximation = trajectory(relT, number_of_initial_steps, gilt_pars)["A"][end];
+A_crit_approximation, Hc, Vc, SHc, SVc = fix_continuous_gauge(A_crit_approximation);
+A_crit_approximation, accepted_elements = fix_discrete_gauge(A_crit_approximation; tol=1e-7);
+
 
 
 ################################################
@@ -34,69 +95,32 @@ function gilt(A, list_of_elements, pars)
 end
 
 
-
-################################################
-# section: EXPERIMENT INIT
-################################################
-
-
-chi = cla_or_def(1, 10)
-gilt_eps = cla_or_def(2, 3e-4)
-relT = cla_or_def(3, 0.9975949995592235)
-number_of_initial_steps = cla_or_def(4, 20)
-order = cla_or_def(5, 2)
-verbosity = cla_or_def(6, 3)
-
-cg_eps = cla_or_def(9, 1e-10)
-
-gilt_pars = Dict(
-    "gilt_eps" => gilt_eps,
-    "cg_chis" => collect(1:chi),
-    "cg_eps" => cg_eps,
-    "verbosity" => verbosity,
-)
-
-A_crit_approximation = trajectory(relT, number_of_initial_steps, gilt_pars)["A"][end];
-A_crit_approximation, Hc, Vc, SHc, SVc = fix_continuous_gauge(A_crit_approximation);
-A_crit_approximation, accepted_elements = fix_discrete_gauge(A_crit_approximation; tol=1e-7);
-
-
 #############################################################################
 # section: CHECKING THE NUMBER OF BOND REPETITIONS AND THE RECURSION DEPTH
 #############################################################################
 
 A1, _ = py"gilttnr_step"(A_crit_approximation, 1.0, gilt_pars);
-A1, _ = fix_continuous_gauge(A1);
-A1, _ = fix_discrete_gauge(A1, accepted_elements);
 
-(A1 - A_crit_approximation).norm() / A_crit_approximation.norm()
+tmp = py"depth_dictionary"
 
 recursion_depth = Dict(
-    "S" => 8,
-    "N" => 7,
-    "E" => 7,
-    "W" => 7
+    "S" => tmp[(1, "S")],
+    "N" => tmp[(1, "N")],
+    "E" => tmp[(1, "E")],
+    "W" => tmp[(1, "W")]
 )
 
-
-bond_repetitions = cla_or_def(7, 2)
+serialize(out_path * "/recursion_depth.data", recursion_depth)
 
 gilt_pars = Dict(
     "gilt_eps" => gilt_eps,
     "cg_chis" => collect(1:chi),
     "cg_eps" => cg_eps,
     "verbosity" => 0,
-    "bond_repetitions" => bond_repetitions,
+    "bond_repetitions" => 2,
     "recursion_depth" => recursion_depth,
+    "rotate" => rotate
 )
-
-A2, _ = py"gilttnr_step"(A_crit_approximation, 1.0, gilt_pars);
-A2, _ = fix_continuous_gauge(A2);
-A2, _ = fix_discrete_gauge(A2, accepted_elements);
-
-(A2 - A_crit_approximation).norm() / A_crit_approximation.norm()
-
-
 
 ###############################################
 # section: CHOOSING THE DIRECTION FOR DERIVATIVE 
@@ -112,7 +136,7 @@ function differentiation_direction()
     while sum(sector_tmp) % 2 != 0
         sector_tmp = (rand([0, 1]), rand([0, 1]), rand([0, 1]), rand([0, 1]))
     end
-    ind_tmp = (rand(1:(chi÷2)), rand(1:(chi÷2)), rand(1:(chi÷2)), rand(1:(chi÷2))) # be careful, the index should be in Z2 conservig sector
+    ind_tmp = (rand(1:(chi÷2)), rand(1:(chi÷2)), rand(1:(chi÷2)), rand(1:(chi÷2)))
     full_ind_tmp = ((chi ÷ 2) .* sector_tmp) .+ ind_tmp
     tmp_ten[full_ind_tmp...] = 1.0
     return TENSZ2.from_ndarray(tmp_ten, shape=shape_tmp, qhape=qhape_tmp, dirs=dirs_tmp)
@@ -140,7 +164,7 @@ function compute_derivatives()
     cnt = 0
     for sz in stp_sizes
         try
-            push!(derivatives, df(fun, A_crit_approximation, v; order=order, stp=sz))
+            push!(derivatives, df(fun, A_crit_approximation, v; order=ord, stp=sz))
         catch e
             push!(derivatives, missing)
         end
@@ -151,7 +175,7 @@ function compute_derivatives()
 end
 
 samples_of_derivative_computation = Any[]
-for i = 1:1
+for i = 1:N
     push!(samples_of_derivative_computation, compute_derivatives())
 end
 
@@ -177,78 +201,8 @@ end
 fig
 
 
+name = gilt_pars_identifier(gilt_pars)
 
-##################################################
-# section: CHECKING THE TRG LOWEST SINGULAR VALUE
-##################################################
-
-function spectrum(t, v, N)
-    pars = deepcopy(gilt_pars)
-    pars["cg_chis"] = N
-    pars["cg_eps"] = 0
-    At = A_crit_approximation + t * v
-    A1t, A2t, _ = py"gilt_plaq"(At, At, pars)
-    _, _, _, _, SB, SC = py"trg"(A1t, A2t, 1.0, pars)
-
-    SBE = SB.sects[(0,)]
-    SBO = SB.sects[(1,)]
-    SCE = SC.sects[(0,)]
-    SCO = SC.sects[(1,)]
-
-    return SBE, SBO, SCE, SCO
-end
-v = differentiation_direction()
-
-SBE, SBO, SCE, SCO = spectrum(0, v, chi);
+save(out_path * "/" * name * "_differentiability_test.pdf", fig)
 
 
-
-findmin([SBE[end], SBO[end], SCE[end], SCO[end]])
-
-
-
-##################################################
-# section: SPECTRUM PLOTTING SUITE
-##################################################
-
-
-scale = 1e-4
-T = collect(-1:0.01:1) * scale
-
-
-BE_hist = Vector{Float64}[]
-BO_hist = Vector{Float64}[]
-CE_hist = Vector{Float64}[]
-CO_hist = Vector{Float64}[]
-
-cnt = 0
-
-for t in T
-    BE, BO, CE, CO = spectrum(t, v, 24)
-    push!(BE_hist, BE[1:11])
-    push!(BO_hist, BO[1:11])
-    push!(CE_hist, CE[1:11])
-    push!(CO_hist, CO[1:11])
-    cnt += 1
-    println("$cnt out of $(length(T)) are done")
-end
-
-
-BE_hist = vec_of_vec_to_matrix(BE_hist);
-BO_hist = vec_of_vec_to_matrix(BO_hist);
-
-CE_hist = vec_of_vec_to_matrix(CE_hist);
-CO_hist = vec_of_vec_to_matrix(CO_hist);
-
-fig = Figure(; size=(500, 500));
-
-
-ax = Axis(fig[1, 1],
-    yscale=log10,
-)
-
-for i = axes(BE_hist, 1)
-    lines!(ax, T, BE_hist[i, :])
-end
-
-fig

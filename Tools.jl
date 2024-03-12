@@ -1,7 +1,6 @@
 # topics:
 # - GENERIC PACKAGES
 # - PYTHON CODES
-# - SCRIPT INPUT HANDLER
 # - BASIC HANDLING OF TRAJECTORIES
 # - TRAJECTORIES PLOTTING
 # - NUMERICAL DIFFERENTIATION
@@ -26,20 +25,6 @@ pushfirst!(pyimport("sys")."path", "GiltTNR")
 @pyinclude("GiltTNR/GiltTNR2D_essentials.py")
 
 
-########################################################
-# topic: SCRIPT INPUT HANDLER
-########################################################
-
-"""
-𝐜𝐥𝐚_or_𝐝𝐞𝐟 stands for 𝐜ommand 𝐥ine 𝐚rgument or 𝐝𝐞𝐟ault value
-"""
-function cla_or_def(ARGS_INDEX, default_value::t) where {t}
-    if ARGS_INDEX <= length(ARGS)
-        return parse(t, ARGS[ARGS_INDEX])
-    else
-        return default_value
-    end
-end
 
 ########################################################
 # topic: BASIC HANDLING OF TRAJECTORIES
@@ -211,13 +196,7 @@ function vec_of_vec_to_matrix(vec)
     return mat
 end
 
-function plot_the_trajectory(; chi, relT, traj_len, N=20, gilt_eps, cg_eps=1e-10, verbosity=100)
-    gilt_pars_local = Dict(
-        "gilt_eps" => gilt_eps,
-        "cg_chis" => collect(1:chi),
-        "cg_eps" => cg_eps,
-        "verbosity" => verbosity
-    )
+function plot_the_trajectory(relT::Float64, gilt_pars_local; traj_len, N=20)
 
     traj = trajectory(relT, traj_len, gilt_pars_local)
 
@@ -239,6 +218,7 @@ function plot_the_trajectory(; chi, relT, traj_len, N=20, gilt_eps, cg_eps=1e-10
 
     file_name = form_the_file_name(relT, traj_len, gilt_pars_local)
     save("trajectory_plots/" * file_name * "_traj_plot_of_$(N)_singular_values.pdf", fig)
+    return fig
 end
 
 

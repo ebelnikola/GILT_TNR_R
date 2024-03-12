@@ -11,6 +11,8 @@ from tensors import Tensor, TensorZ2
 #convergence_eps = 1e-2
 convergence_eps = 1e-2
 
+depth_dictionary=dict()
+
 #######################################
 # signs testing functions
 import warnings
@@ -360,6 +362,9 @@ def gilt_plaq(A1, A2, pars):
     
     lap=0
 
+    global depth_dictionary
+    depth_dictionary=dict() 
+
     for leg in itterator:
 
         if leg=="S":
@@ -493,6 +498,7 @@ def apply_Rp(A1, A2, Rp1, Rp2, where=None):
     return A1, A2
 
 
+
 def optimize_Rp(U, S, pars, **kwargs):
     """
     Given the environment spectrum S and the singular vectors U, choose
@@ -554,6 +560,8 @@ def optimize_Rp(U, S, pars, **kwargs):
         if done_recursing:
             if verbose:
                 status_print("Rp optimisation is over after reaching the convergence epsilon. Depth counter:", pars["depth_counter"])
+            global depth_dictionary
+            depth_dictionary[(pars["lap"],pars["where"])]=pars["depth_counter"]    
     if not done_recursing:
         ssqrt = s.sqrt()
         us = u.multiply_diag(ssqrt, 1, direction="right")

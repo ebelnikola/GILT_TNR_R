@@ -1,5 +1,4 @@
-include("../Tools.jl")
-
+using ArgParse
 
 settings = ArgParseSettings()
 @add_arg_table! settings begin
@@ -31,6 +30,9 @@ pars = parse_args(settings; as_symbols=true)
 for (key, value) in pars
     @eval $key = $value
 end
+
+include("../Tools.jl")
+
 
 
 function epsilon_test(gilt_eps, chi=chi, cg_eps=cg_eps, relT=relT)

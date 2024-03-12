@@ -1,25 +1,54 @@
 include("../Tools.jl")
 
 
-const global chi = cla_or_def(1, 10)
-const global gilt_eps = cla_or_def(2, 5e-5)
+settings = ArgParseSettings()
+@add_arg_table! settings begin
+    "--chi"
+    help = "The bond dimension"
+    arg_type = Int64
+    default = 10
+    "--gilt_eps"
+    help = "The threshold used in the GILT algorithm"
+    arg_type = Float64
+    default = 3e-4
+    "--relT"
+    help = "The realtive temperature of the initial tensor"
+    arg_type = Float64
+    default = 1.0
+    "--traj_len"
+    help = "The length of trajectory considered in the test"
+    arg_type = Int64
+    default = 20
+    "--cg_eps"
+    help = "The threshold used in TRG steps to truncate the bonds"
+    arg_type = Float64
+    default = 1e-10
+    "--rotate"
+    help = "If true the algorithm will perform a rotation by 90 degrees after each GILT TNR step"
+    arg_type = Bool
+    default = false
+    "--N"
+    help = "The number of singular values of tensor to display in the trajectory plot"
+    arg_type = Int64
+    default = 20
+end
 
-const global relT = cla_or_def(3, 1.0)
 
-const global traj_len = cla_or_def(4, 10)
-
-const global N = cla_or_def(5, 20)
-
-const global cg_eps = cla_or_def(6, 1e-10)
-const global verbosity = cla_or_def(7, 3)
+pars = parse_args(settings; as_symbols=true)
+for (key, value) in pars
+    @eval $key = $value
+end
 
 
-plot_the_trajectory(;
-    chi=chi,
-    relT=relT,
-    traj_len=traj_len,
-    N=N,
-    gilt_eps=gilt_eps,
-    cg_eps=cg_eps,
-    verbosity=verbosity
+
+const global gilt_pars = Dict(
+    "gilt_eps" => gilt_eps,
+    "cg_chis" => collect(1:chi),
+    "cg_eps" => cg_eps,
+    "verbosity" => 2,
+    "rotate" => rotate
 )
+
+plot_the_trajectory(relT, gilt_pars; traj_len=traj_len, N=N)
+
+
