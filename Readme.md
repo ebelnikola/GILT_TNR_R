@@ -39,21 +39,11 @@ Note that each of these scripts has the corresponding help describing all the co
 julia Lab/script_name.jl --help
 ```
 
-
-## Critical_temperatures directory
-
-Contains the results of running the ```critical_temperature.jl``` script.
-
-## Trajectories directory
-
-Contains computed RG flows of tensors. Each ".data" file contains trajectories of tensors themselves, corresponding log factors, and errors.  Each ".log" file contains the text output produced by the algorithm during the computation. The naming convention:    
-  ```rotate=[rotate]_[chi]_[gilt_eps]_[cg_eps]__relT=[relT]_len=[len].data/.log``` 
-
 ## Files in the root directory
 
 - ```EchelonForm.jl``` - technical code used in ```GaugeFixing.jl``` for checking ranks of boolean matrices. 
 - ```GaugeFixing.jl``` - continuous and discrete gauge fixing routines.
-- ```install_packages.jl``` - script that installs all the necessary dependencies.
+- ```install_packages.jl``` - script that installs all the necessary dependencies and creates necessary directories.
 - ```KrylovTechnical.jl``` - technical code that provides a minimal implementation of Z2 invariant tensors in Julia. This solves the problem of ```KrylovKit``` throwing a segmentation fault while working with PyObjects.
 - ```NumDifferentiation.jl``` - provides the function that performs numerical differentiation.
 - ```Tools.jl``` - Contains user-dedicated functions. See the top of the file for the list of functions.    
