@@ -28,7 +28,7 @@ Contains scripts for computations:
 
 - ```critical_temperature.jl``` finds the critical temperature using bisection search. Saves the result into the "critical_temperatures" directory. Also plots the corresponding trajectories of the singular values. Saves the plot into the "trajectory_plots" directory. 
  
-- ```differentiability_test.jl``` performs differentiability tests of the GiltTNR algorithm. Chooses a random direction $v$ and computes the numerical derivative $\Delta_n=\frac{GiltTNR(A+s_n*v/2)-GiltTNR(A-s_n*v/2)}{s_n}$, where $s_n=10^{-3-0.05n}$. Plots $|\Delta_{n+1}-\Delta_n|/|\Delta_n|$ vs $n$ and saves this plot into the "results" directory. The approximate minimum of this plot should be chosen as the step size in ```newton.jl```. If parameter ```N``` is passed, will perform test for ```N``` random directions. 
+- ```differentiability_test.jl``` performs differentiability tests of the GiltTNR algorithm. Chooses a random direction $v$ and computes the numerical derivative $\Delta_n=(GiltTNR(A+s_n*v/2)-GiltTNR(A-s_n*v/2))/s_n$, where $s_n=10^{-3-0.05n}$. Plots $|\Delta_{n+1}-\Delta_n|/|\Delta_n|$ vs $n$ and saves this plot into the "results" directory. The approximate minimum of this plot should be chosen as the step size in ```newton.jl```. If parameter ```N``` is passed, will perform test for ```N``` random directions. 
 
 - ```eigensystem.jl``` gets the largest eigenvalues and the corresponding eigenvectors of GiltTNR linearised around some initial approximation of the critical tensor (given by ```relT``` and ```number_of_initial_steps```). Saves the resulting tensor and the eigensystem to ```eigensystems```. 
 
