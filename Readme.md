@@ -58,7 +58,7 @@ Ensure that your working directory is the root directory of this project. Then, 
 
 ## Eigenvalues of GiltTNR without rotation at an approximate fixed point
 
-Let us do the computation for $\chi=10$, $gilt\_ eps=1e-4$. To get an approximate fixed point we run the bisection search:
+Let us do the computation for $\chi=10$, $gilt eps=1e-4$. To get an approximate fixed point we run the bisection search:
 ```
 nohup julia Lab/critical_temperature.jl --chi 10 --gilt_eps 1e-4 --search_tol 1e-10 &
 ```
