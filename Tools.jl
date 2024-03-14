@@ -1,13 +1,13 @@
 # topics:
 # - GENERIC PACKAGES
 # - PYTHON CODES
-# - BASIC HANDLING OF TRAJECTORIES
-# - TRAJECTORIES PLOTTING
-# - NUMERICAL DIFFERENTIATION
-# - CRITICAL TEMPERATURE SEARCH
-# - ROUTINES FOR ANALYSIS
-# - PLOTTING SHORTHANDS
-# - EXACT ISING SPECTRUM
+# - BASIC HANDLING OF TRAJECTORIES: initial_tensor, trajectory (2 methods), trajectory_no_saving
+# - TRAJECTORIES PLOTTING: plot_the_trajectory (2 methods)
+# - NUMERICAL DIFFERENTIATION: df - performs differentiation
+# - CRITICAL TEMPERATURE SEARCH: perform_search
+# - ROUTINES FOR ANALYSIS: variation, relative_variation
+# - PLOTTING SHORTHANDS: yloglines, xloglines, xyloglines
+# - EXACT ISING SPECTRUM: exact_spectrum, exact_spectrum_even
 
 
 ########################################################
