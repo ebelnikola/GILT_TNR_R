@@ -6,6 +6,10 @@ settings = ArgParseSettings()
     help = "The bond dimension"
     arg_type = Int64
     default = 10
+    "--gilt_eps"
+    help = "The threshold used in the GILT algorithm"
+    arg_type = Float64
+    default = 1e-4
     "--relT_low"
     help = "The lower bound for the critical temperature search"
     arg_type = Float64
@@ -40,22 +44,21 @@ end
 include("../Tools.jl")
 
 
-out_path = "out/chi=$chi"
-gilt_eps = deserialize(out_path * "/optimal_eps_and_its_error.data")[1]
-
-
 const global gilt_pars = Dict(
     "gilt_eps" => gilt_eps,
     "cg_chis" => collect(1:chi),
     "cg_eps" => cg_eps,
-    "verbosity" => 2,
+    "verbosity" => 3,
     "rotate" => rotate
 )
 
+gilt_pars["verbosity"] = 0
 
 search_result = perform_search(relT_low, relT_high, gilt_pars; search_tol=search_tol, max_number_of_steps=max_number_of_steps, verbose=false)
 
-serialize(out_path * "/critical_temperature_and_length_tol=$(search_tol).data", search_result)
+serialize("critical_temperatures/" * gilt_pars_identifier(gilt_pars) * "__tol=$(search_tol).data", search_result)
+
+gilt_pars["verbosity"] = 3
 
 plot_the_trajectory((search_result[1] + search_result[2]) / 2, gilt_pars; traj_len=search_result[3])
 

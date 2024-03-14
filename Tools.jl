@@ -61,7 +61,7 @@ function handle_the_database(relT::t, len::Int64, gilt_pars) where {t}
         if verbose
             @info "No record in the database, will compute the trajectory from scratch"
         end
-        return Any[initial_tensor(relT)], t[1.0], Array{t,1}[[0, 0, 0, 0, 0]], 0
+        return Any[initial_tensor(relT)], t[0.0], Array{t,1}[[0, 0, 0, 0, 0]], 0
     elseif length(matching) == 1
         existing_length = parse(Int64, match(pattern, matching[1]).captures[1])
         if existing_length >= len
@@ -79,7 +79,7 @@ function handle_the_database(relT::t, len::Int64, gilt_pars) where {t}
         return traj["A"][1:(len+1)], traj["log_fact"][1:(len+1)], traj["errs"][1:(len+1)], existing_length
     elseif length(mathcing) > 2
         @warn "The database is corrupted (repeated entries), will recompute the result from scratch."
-        return Any[initial_tensor(relT)], t[1.0], Array{t,1}[[0, 0, 0, 0, 0]], 0
+        return Any[initial_tensor(relT)], t[0.0], Array{t,1}[[0, 0, 0, 0, 0]], 0
     end
 end
 
@@ -123,10 +123,10 @@ end
 
 
 
-function trajectory(A_init::PyObject, len::Int64, gilt_pars) where {t}
+function trajectory(A_init::PyObject, len::Int64, gilt_pars)
     A_hist = [A_init]
     log_fact_hist = Float64[0.0]
-    errs_hist = Vector{Float64}[]
+    errs_hist = Vector{Float64}[[0, 0, 0, 0, 0]]
     for i = 2:len
         A, log_fact, errs = py"gilttnr_step"(A_hist[i-1], log_fact_hist[i-1], gilt_pars)
         push!(A_hist, A)
@@ -221,8 +221,6 @@ function plot_the_trajectory(relT::Float64, gilt_pars_local; traj_len, N=20)
     return fig
 end
 
-
-
 function plot_the_trajectory(A_init::PyObject, gilt_pars_local; traj_len, N=20)
 
     traj = trajectory(A_init, traj_len, gilt_pars_local)
@@ -251,7 +249,9 @@ end
 # topic: NUMERICAL DIFFERENTIATION
 ########################################################
 
-include("NumDifferentiation.jl")
+if !(@isdefined(NumDifferentiation))
+    include("NumDifferentiation.jl")
+end
 
 using Main.NumDifferentiation
 
@@ -267,7 +267,6 @@ using Main.NumDifferentiation
 end
 
 function phase(A, gilt_pars; max_number_of_steps=40, tol=1e-4)
-    gilt_pars["verbosity"] = 0
     for i = 1:max_number_of_steps
         A, _ = py"gilttnr_step"(A, 1.0, gilt_pars)
         second_eigenvalue = (A|>py"get_A_spectrum"|>N_first_elements_zero_if_missing)[2]
@@ -359,11 +358,13 @@ end
 # topic: EXACT ISING SPECTRUM
 ########################################################
 
-
 spec = deserialize("IsingExactLevels")
-const global exact_degeneracies = Int64.(spec[1, :]);
-const global exact_levels = spec[2, :];
-const global exact_spectrum_max_number_of_levels = sum(exact_degeneracies);
+
+if !@isdefined(exact_degeneracies)
+    const global exact_degeneracies = Int64.(spec[1, :])
+    const global exact_levels = spec[2, :]
+    const global exact_spectrum_max_number_of_levels = sum(exact_degeneracies)
+end
 
 function exact_spectrum(n)
     spec = Float64[]
@@ -384,10 +385,14 @@ end
 
 
 
+
 spec = deserialize("IsingEvenExactLevels")
-const global exact_degeneracies_even = Int64.(spec[1, :]);
-const global exact_levels_even = spec[2, :];
-const global exact_spectrum_max_number_of_levels_even = sum(exact_degeneracies_even);
+
+if !@isdefined(exact_degeneracies_even)
+    const global exact_degeneracies_even = Int64.(spec[1, :])
+    const global exact_levels_even = spec[2, :]
+    const global exact_spectrum_max_number_of_levels_even = sum(exact_degeneracies_even)
+end
 
 function exact_spectrum_even(n)
     spec = Float64[]

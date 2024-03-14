@@ -11,6 +11,8 @@ from tensors import Tensor, TensorZ2
 #convergence_eps = 1e-2
 convergence_eps = 1e-2
 
+
+Rmatrices=dict()
 depth_dictionary=dict()
 
 #######################################
@@ -91,88 +93,11 @@ def gilttnr_step(A, log_fact, pars, **kwargs):
     A, log_fact, err_A1_split, err_A2_split, SB1, SC1 = trg(A1, A2, log_fact, pars)
     A, log_fact, err_A_split1, err_A_split2, SB2, SC2 = trg(A, A, log_fact, pars)
 
-    # The lattice has been rotated by 90deg in the process, so rotate
-    # back (if pars["rotate"]=True we omit this step and get a rotated result)
+    # The lattice has been rotated by 90deg in the process. Thus, 
+    # if we want to get rotated result, we should do nothing. If we want to 
+    # unrotate it, we perform an additional rotation. Hence "not(pars["rotate"])". 
     if not(pars["rotate"]):
         A = A.transpose((3,0,1,2))
-
-    errors=np.array([gilt_err,err_A1_split,err_A2_split,err_A_split1, err_A_split2])
-    trgspecs=[SB1,SC1,SB2,SC2]
-
-    retval = (A, log_fact,errors)
-    return retval
-
-####################################################################################
-
-
-
-def gilttnr_step_broken(A, log_fact, pars, **kwargs):
-    """
-    Apply a full step of Gilt-TNR to a lattice made of tensors A.
-    A full step means a transformation that takes the square lattice to
-    a square lattice (no 45deg tilt), and changes the lattice spacing by
-    a factor of 2.
-
-    Arguments:
-    A: The tensor to be coarse-grained. No symmetries are assumed for A.
-    log_fact: A scalar factor, such that A*np.exp(log_fact) is the
-              physical tensor.
-    pars: A dictionary of various parameters that the algorithm takes,
-          see below.
-    **kwargs: Additional keyword arguments may be given to override the
-              parameters in pars. The original dictionary is not
-              modified.
-
-    Returns:
-    A', log_fact'
-    such that the coarse-grained physical tensor is A'*np.exp(log_fact').
-
-    The Gilt-TNR algorithm takes the following parameters:
-    gilt_eps:
-    The threshold for how small singular values are considered "small
-    enough" in Gilt, which determines the amount of truncation done.
-
-    cg_chis:
-    An iterable of integers, that lists the possible bond dimensions
-    to which TRG is allowed to truncate.
-
-    cg_eps:
-    A threshold for the truncation error in TRG.
-    The bond dimension used in the truncated SVD of TRG is the smallest
-    one from cg_chis, such that the truncation error is below cg_eps.
-    If this isn't possible, then the largest chi in cg_chis is used.
-
-    verbosity:
-    Determines the amount of output the algorithm prints out.
-    """
-
-    Tensor.from_ndarray(A)
-
-    pars = update_pars(pars, **kwargs)
-    verbose = pars["verbosity"] > 1
-
-    # Normalize the tensor A, to keep its elements near unity or below.
-    m = A.norm()
-    if m != 0:
-        A /= m
-        log_fact += np.log(m)
-
-    # Apply Gilt.
-    if float(pars["gilt_eps"]) > 0:
-        A1, A2, gilt_err = gilt_plaq(A, A, pars)
-    else:
-        A1, A2, gilt_err = A, A, 0.
-
-
-    # Apply TRG to the checker-board lattice made of A1 and A2, and then
-    # once to the homogeneous lattice of As.
-    A, log_fact, err_A1_split, err_A2_split, SB1, SC1 = trg(A1, A2, log_fact, pars)
-    A, log_fact, err_A_split1, err_A_split2, SB2, SC2 = trg(A, A, log_fact, pars)
-
-    # The lattice has been rotated by 90deg in the process, so rotate
-    # back.
-    # A = A.transpose((3,0,1,2))
-    # now the result should be 90 degree roated each time.
 
     errors=np.array([gilt_err,err_A1_split,err_A2_split,err_A_split1, err_A_split2])
     trgspecs=[SB1,SC1,SB2,SC2]
@@ -363,7 +288,7 @@ def gilt_plaq(A1, A2, pars):
     lap=0
 
     global depth_dictionary
-    depth_dictionary=dict() 
+    depth_dictionary=dict()
 
     for leg in itterator:
 
@@ -399,7 +324,6 @@ def gilt_plaq(A1, A2, pars):
 
     return A1, A2, gilt_error
 
-Rmatrices=dict()
 
 def apply_gilt(A1, A2, pars, where=None):
     """
@@ -498,7 +422,6 @@ def apply_Rp(A1, A2, Rp1, Rp2, where=None):
     return A1, A2
 
 
-
 def optimize_Rp(U, S, pars, **kwargs):
     """
     Given the environment spectrum S and the singular vectors U, choose
@@ -558,10 +481,10 @@ def optimize_Rp(U, S, pars, **kwargs):
     else:
         done_recursing = (s-1).abs().max() < convergence_eps
         if done_recursing:
+            global depth_dictionary
+            depth_dictionary[(pars["lap"],pars["where"])]=pars["depth_counter"]
             if verbose:
                 status_print("Rp optimisation is over after reaching the convergence epsilon. Depth counter:", pars["depth_counter"])
-            global depth_dictionary
-            depth_dictionary[(pars["lap"],pars["where"])]=pars["depth_counter"]    
     if not done_recursing:
         ssqrt = s.sqrt()
         us = u.multiply_diag(ssqrt, 1, direction="right")

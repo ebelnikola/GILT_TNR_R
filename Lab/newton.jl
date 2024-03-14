@@ -10,8 +10,6 @@ include("../Tools.jl");
 include("../GaugeFixing.jl");
 include("../KrylovTechnical.jl");
 
-
-
 ################################################
 # section: FUNCTIONS
 ################################################
@@ -338,3 +336,30 @@ initial_vector = py_to_ju(random_Z2tens(A_crit_approximation));
 res_new = eigsolve(dgilt, initial_vector, 10, :LM; verbosity=3, issymmetric=false, ishermitian=false, krylovdim=30);
 res_new[1]
 
+
+#############################################################################
+# section: CHECKING THE NUMBER OF BOND REPETITIONS AND THE RECURSION DEPTH
+#############################################################################
+
+A1, _ = py"gilttnr_step"(A_crit_approximation, 1.0, gilt_pars);
+
+tmp = py"depth_dictionary"
+
+recursion_depth = Dict(
+    "S" => tmp[(1, "S")],
+    "N" => tmp[(1, "N")],
+    "E" => tmp[(1, "E")],
+    "W" => tmp[(1, "W")]
+)
+
+serialize(flow_path * "/recursion_depth.data", recursion_depth)
+
+gilt_pars = Dict(
+    "gilt_eps" => gilt_eps,
+    "cg_chis" => collect(1:chi),
+    "cg_eps" => cg_eps,
+    "verbosity" => 0,
+    "bond_repetitions" => 2,
+    "recursion_depth" => recursion_depth,
+    "rotate" => rotate
+)

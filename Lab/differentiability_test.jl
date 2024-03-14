@@ -20,14 +20,18 @@ settings = ArgParseSettings()
     help = "The bond dimension"
     arg_type = Int64
     default = 10
+    "--gilt_eps"
+    help = "The threshold used in the GILT algorithm"
+    arg_type = Float64
+    default = 1e-4
     "--relT"
     help = "The realtive temperature of the initial tensor"
     arg_type = Float64
-    default = 1.0
+    default = 1.001277863197029
     "--number_of_initial_steps"
     help = "Number of RG steps made to get an approximation of the critical tensor"
     arg_type = Int64
-    default = 4
+    default = 15
     "--cg_eps"
     help = "The threshold used in TRG steps to truncate the bonds"
     arg_type = Float64
@@ -43,7 +47,7 @@ settings = ArgParseSettings()
     "--N"
     help = "Number of randomised tests"
     arg_type = Int64
-    default = 2
+    default = 1
 end
 
 pars = parse_args(settings; as_symbols=true)
@@ -52,13 +56,9 @@ for (key, value) in pars
 end
 
 
-
 include("../Tools.jl");
 include("../GaugeFixing.jl");
 
-
-out_path = "out/chi=$chi"
-gilt_eps = deserialize(out_path * "/optimal_eps_and_its_error.data")[1]
 
 gilt_pars = Dict(
     "gilt_eps" => gilt_eps,
@@ -71,7 +71,6 @@ gilt_pars = Dict(
 A_crit_approximation = trajectory(relT, number_of_initial_steps, gilt_pars)["A"][end];
 A_crit_approximation, Hc, Vc, SHc, SVc = fix_continuous_gauge(A_crit_approximation);
 A_crit_approximation, accepted_elements = fix_discrete_gauge(A_crit_approximation; tol=1e-7);
-
 
 
 ################################################
@@ -94,12 +93,15 @@ function gilt(A, list_of_elements, pars)
     return A
 end
 
+gilt_tensor = x -> gilt(x, accepted_elements, gilt_pars);
+
+
 
 #############################################################################
-# section: CHECKING THE NUMBER OF BOND REPETITIONS AND THE RECURSION DEPTH
+# section: FIXING THE NUMBER OF BOND REPETITIONS AND THE RECURSION DEPTH
 #############################################################################
 
-A1, _ = py"gilttnr_step"(A_crit_approximation, 1.0, gilt_pars);
+A1, _ = py"gilttnr_step"(A_crit_approximation, 0.0, gilt_pars);
 
 tmp = py"depth_dictionary"
 
@@ -109,8 +111,6 @@ recursion_depth = Dict(
     "E" => tmp[(1, "E")],
     "W" => tmp[(1, "W")]
 )
-
-serialize(out_path * "/recursion_depth.data", recursion_depth)
 
 gilt_pars = Dict(
     "gilt_eps" => gilt_eps,
@@ -142,12 +142,6 @@ function differentiation_direction()
     return TENSZ2.from_ndarray(tmp_ten, shape=shape_tmp, qhape=qhape_tmp, dirs=dirs_tmp)
 end
 
-
-################################################
-# section: TEST FUNCTIONS IN A CONVINIENT FORM
-################################################
-
-gilt_tensor = x -> gilt(x, accepted_elements, gilt_pars);
 
 
 #############################################
@@ -198,11 +192,9 @@ ax = Axis(fig[1, 1],
 for sample in samples_of_derivative_computation
     lines!(ax, stp_sizes[1:end-1], norm.(variation(sample)) ./ norm.(sample[1:end-1]))
 end
-fig
-
 
 name = gilt_pars_identifier(gilt_pars)
 
-save(out_path * "/" * name * "_differentiability_test.pdf", fig)
+save("diff_tests/" * name * "__relT=$(relT)_step=$(number_of_initial_steps).pdf", fig)
 
 

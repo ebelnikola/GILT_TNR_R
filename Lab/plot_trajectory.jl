@@ -1,5 +1,4 @@
-include("../Tools.jl")
-
+using ArgParse
 
 settings = ArgParseSettings()
 @add_arg_table! settings begin
@@ -10,7 +9,7 @@ settings = ArgParseSettings()
     "--gilt_eps"
     help = "The threshold used in the GILT algorithm"
     arg_type = Float64
-    default = 3e-4
+    default = 1e-4
     "--relT"
     help = "The realtive temperature of the initial tensor"
     arg_type = Float64
@@ -39,6 +38,8 @@ for (key, value) in pars
     @eval $key = $value
 end
 
+include("../Tools.jl")
+
 
 
 const global gilt_pars = Dict(
@@ -48,6 +49,7 @@ const global gilt_pars = Dict(
     "verbosity" => 2,
     "rotate" => rotate
 )
+
 
 plot_the_trajectory(relT, gilt_pars; traj_len=traj_len, N=N)
 

@@ -244,7 +244,7 @@ function solve_linear_system(preM, preb)
     𝕍 = matrix_space(ℤ₂, size(preM, 1), 1)
     M = 𝕄(preM)
     b = 𝕍(preb)
-    hv = solve(M, b)
+    hv = solve(M, b; side=:right)
     return to_bool(hv)
 end
 
