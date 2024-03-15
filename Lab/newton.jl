@@ -1,14 +1,119 @@
 # sections
-# - FUNCTIONS
 # - EXPERIMENT INIT
-# - EIGENVALUES
+# - RECURSION DEPTH FIXING
+# - FUNCTIONS
 # - NEWTON
-# - SCALING DIMENSIONS
-# - EXPORT
+# - EIGENVALUES
+
+
+################################################
+# section: EXPERIMENT INIT
+################################################
+
+using ArgParse
+
+settings = ArgParseSettings()
+@add_arg_table! settings begin
+    "--chi"
+    help = "The bond dimension"
+    arg_type = Int64
+    default = 10
+    "--gilt_eps"
+    help = "The threshold used in the GILT algorithm"
+    arg_type = Float64
+    default = 1e-4
+    "--relT"
+    help = "The realtive temperature of the initial tensor"
+    arg_type = Float64
+    default = 1.0
+    "--number_of_initial_steps"
+    help = "Number of RG steps made to get an approximation of the critical tensor"
+    arg_type = Int64
+    default = 5
+    "--cg_eps"
+    help = "The threshold used in TRG steps to truncate the bonds"
+    arg_type = Float64
+    default = 1e-10
+    "--ord"
+    help = "order of differentiation algorithm"
+    arg_type = Int64
+    default = 2
+    "--stp"
+    help = "step used in differentiation algorithm"
+    arg_type = Float64
+    default = 5e-6
+    "--eigensystem_size"
+    help = "Number of eigenvectors and eigenvalues ot be used to approximate the jacobian"
+    arg_type = Int64
+    default = 10
+    "--N"
+    help = "Number of steps performed by the Newton algorithm"
+    arg_type = Int64
+    default = 20
+    "--verbosity"
+    help = "Verbosity of the eigensolver"
+    arg_type = Int64
+    default = 3
+end
+
+rotate = true
+
+pars = parse_args(settings; as_symbols=true)
+for (key, value) in pars
+    @eval $key = $value
+end
 
 include("../Tools.jl");
 include("../GaugeFixing.jl");
 include("../KrylovTechnical.jl");
+
+
+
+gilt_pars = Dict(
+    "gilt_eps" => gilt_eps,
+    "cg_chis" => collect(1:chi),
+    "cg_eps" => cg_eps,
+    "verbosity" => 0,
+    "rotate" => rotate
+)
+
+A_crit_approximation = trajectory(relT, number_of_initial_steps, gilt_pars)["A"][end];
+A_crit_approximation, Hc, Vc, SHc, SVc = fix_continuous_gauge(A_crit_approximation);
+A_crit_approximation, accepted_elements = fix_discrete_gauge(A_crit_approximation; tol=1e-7);
+
+A_crit_approximation /= A_crit_approximation.norm();
+
+
+
+################################################
+# section: RECURSION DEPTH FIXING AND NORMALISATION
+################################################
+
+A1, _ = py"gilttnr_step"(A_crit_approximation, 0.0, gilt_pars);
+
+g = A1.norm();
+A_crit_approximation = g^(-1 / 3) * A_crit_approximation;
+A_crit_approximation_JU = py_to_ju(A_crit_approximation);
+
+
+tmp = py"depth_dictionary"
+
+recursion_depth = Dict(
+    "S" => tmp[(1, "S")],
+    "N" => tmp[(1, "N")],
+    "E" => tmp[(1, "E")],
+    "W" => tmp[(1, "W")]
+)
+
+gilt_pars = Dict(
+    "gilt_eps" => gilt_eps,
+    "cg_chis" => collect(1:chi),
+    "cg_eps" => cg_eps,
+    "verbosity" => 0,
+    "bond_repetitions" => 2,
+    "recursion_depth" => recursion_depth,
+    "rotate" => rotate
+)
 
 ################################################
 # section: FUNCTIONS
@@ -31,86 +136,10 @@ function gilt(A, list_of_elements, pars)
 end
 
 
-################################################
-# section: EXPERIMENT INIT
-################################################
-
-chi = cla_or_def(1, 10)
-gilt_eps = cla_or_def(2, 3e-4)
-relT = cla_or_def(3, 0.9975949995592235)
-number_of_initial_steps = cla_or_def(4, 20)
-order = cla_or_def(5, 2)
-stp = cla_or_def(6, 5e-6)
-verbosity = cla_or_def(7, 0)
-
-cg_eps = cla_or_def(9, 1e-10)
-
-gilt_pars = Dict(
-    "gilt_eps" => gilt_eps,
-    "cg_chis" => collect(1:chi),
-    "cg_eps" => cg_eps,
-    "verbosity" => verbosity,
-)
-
-A_crit_approximation = trajectory(relT, number_of_initial_steps, gilt_pars)["A"][end];
-A_crit_approximation, Hc, Vc, SHc, SVc = fix_continuous_gauge(A_crit_approximation);
-A_crit_approximation, accepted_elements = fix_discrete_gauge(A_crit_approximation; tol=1e-7);
-
-A_crit_approximation_JU = py_to_ju(A_crit_approximation);
-
-recursion_depth = Dict(
-    "S" => 8,
-    "N" => 7,
-    "E" => 7,
-    "W" => 7
-)
-bond_repetitions = cla_or_def(7, 2)
-
-gilt_pars = Dict(
-    "gilt_eps" => gilt_eps,
-    "cg_chis" => collect(1:chi),
-    "cg_eps" => cg_eps,
-    "verbosity" => 0,
-    "bond_repetitions" => bond_repetitions,
-    "recursion_depth" => recursion_depth,
-)
-
-
-
 function dgilt(δA)
-    return df(x -> gilt(x, accepted_elements, gilt_pars), A_crit_approximation_JU, δA; stp=stp, order=order)
+    return df(x -> gilt(x, accepted_elements, gilt_pars), A_crit_approximation_JU, δA; stp=stp, order=ord)
 end
 
-A_crit_approximation_JU /= (A_crit_approximation_JU |> norm);
-
-A2 = gilt(A_crit_approximation_JU, accepted_elements, gilt_pars);
-
-A_crit_approximation_JU |> norm
-g = A2 |> norm;
-N = g^(-1 / 3)
-
-A_crit_approximation_JU = A_crit_approximation_JU * N;
-
-A_crit_approximation_JU |> norm
-
-A2 = gilt(A_crit_approximation_JU, accepted_elements, gilt_pars);
-
-
-#################################################
-# section: EIGENVALUES
-#################################################
-
-
-initial_vector = py_to_ju(random_Z2tens(A_crit_approximation));
-
-res = eigsolve(dgilt, initial_vector, 10, :LM; verbosity=3, issymmetric=false, ishermitian=false, krylovdim=30);
-res[1]
-
-
-
-#################################################
-# section: NEWTON
-#################################################
 
 function build_jacobian_approximation(vectors::Vector{t}, values::Vector) where {t}
     rank = length(values)
@@ -172,27 +201,23 @@ function build_Graham_Schmidt_matrix(non_orthogonal_normalised_basis::Vector{t})
     return Graham_Schmidt_Matrix, orthonormal_basis
 end
 
-jac_approximation_non_orthogonal_basis, non_orthogonal_normalised_basis = build_jacobian_approximation(res[2], res[1]);
-g, orthonormal_basis = build_Graham_Schmidt_matrix(non_orthogonal_normalised_basis);
-jac_approximation = g^(-1) * jac_approximation_non_orthogonal_basis * g;
-
-# check1
-tst = transpose(g) * non_orthogonal_normalised_basis;
-tst - orthonormal_basis .|> norm |> findmax
-
-approximation_rank = length(orthonormal_basis);
 
 
-#check2
-ortho_check = zeros(approximation_rank, approximation_rank)
-for i = 1:approximation_rank
-    for j = 1:approximation_rank
-        ortho_check[i, j] = dot(orthonormal_basis[i], orthonormal_basis[j])
-    end
-end
-(ortho_check - diagm(diag(ortho_check))) |> norm
-diag(ortho_check) .- 1 |> norm
 
+#################################################
+# section: NEWTON
+#################################################
+
+
+initial_vector = py_to_ju(random_Z2tens(A_crit_approximation));
+eigensystem_init = eigsolve(dgilt, initial_vector, eigensystem_size, :LM; verbosity=verbosity, issymmetric=false, ishermitian=false, krylovdim=30);
+
+
+jac_approximation_non_orthogonal_basis, non_orthogonal_normalised_basis = build_jacobian_approximation(eigensystem_init[2], eigensystem_init[1]);
+Graham_Schmidt_matrix, orthonormal_basis = build_Graham_Schmidt_matrix(non_orthogonal_normalised_basis);
+jac_approximation = Graham_Schmidt_matrix^(-1) * jac_approximation_non_orthogonal_basis * Graham_Schmidt_matrix;
+
+approximation_rank = length(eigensystem_init[1])
 
 function factor(δA)
     res = deepcopy(δA)
@@ -214,14 +239,10 @@ end
 
 A_hist = [A_crit_approximation_JU];
 
-N = 10
 for i = 2:N
     push!(A_hist, newton_function(A_hist[i-1]))
-    println(A_hist[i] - A_hist[i-1] |> norm)
+    println("Newton step size: $(A_hist[i] - A_hist[i-1] |> norm)")
 end
-
-mkpath("newton_results/chi=$chi")
-
 
 fig = Figure(; size=(1000, 1000));
 
@@ -236,130 +257,49 @@ ax = Axis(fig[1, 1],
     ylabelsize=35,
     yticklabelsize=20,);
 
-
 lines!(ax, variation(A_hist) .|> norm);
 
-fig
 
-save("newton_results/chi=$chi/convergence.pdf", fig)
+save("newton/" * gilt_pars_identifier(gilt_pars) * "__newton_convergence_plot.pdf", fig)
 
 
 A_crit_approximation_new_JU = A_hist[end];
 
-fig1 = plot_the_trajectory(
-    ju_to_py(A_crit_approximation_JU),
-    gilt_pars;
-    traj_len=50
-)
-
-save("newton_results/chi=$chi/trajectory_starting_from_initial_tensor.pdf", fig1)
-
-
-fig2 = plot_the_trajectory(
+fig = plot_the_trajectory(
     ju_to_py(A_crit_approximation_new_JU),
     gilt_pars;
     traj_len=50
 )
-
-save("newton_results/chi=$chi/trajectory_starting_from_the_new_tensor.pdf", fig2)
-
+save("newton/" * gilt_pars_identifier(gilt_pars) * "__trajectory_after_newton.pdf", fig)
 
 #################################################
-# section: SCALING DIMENSIONS
+# section: EIGENVALUES
 #################################################
 
-py"""
-def get_scaldims(A):
-    logging.info("Diagonalizing the transfer matrix.")
-    # The cost of this scales as O(chi^6).
-    transmat = ncon((A, A), [[3,-101,4,-1], [4,-102,3,-2]])
-    es = transmat.eig([0,1], [2,3], hermitian=False)[0]
-    # Extract the scaling dimensions from the eigenvalues of the
-    # transfer matrix.
-    es = es.to_ndarray()
-    es = np.abs(es)
-    es = -np.sort(-es)
-    es[es==0] += 1e-16  # Ugly workaround for taking the log of zero.
-    log_es = np.log(es)
-    log_es -= np.max(log_es)
-    log_es /= -np.pi
-    return log_es
-"""
-
-dims_old = py"get_scaldims"(ju_to_py(A_crit_approximation_JU));
-dims_new = py"get_scaldims"(ju_to_py(A_crit_approximation_new_JU));
-
-levels_found = length(dims_old)
-
-low_levels = 2:20
-levels = low_levels
-
-fig = Figure(; size=(500, 500));
-ax = Axis(fig[1, 1],
-    title="Deviation of scaling dimensions from the exact values",
-    ylabel="|Δ_approximate-Δ_exact| / |Δ_exact| "
-)
-
-nrms = (norm.(exact_spectrum(levels_found)[levels]))
-lines!(ax, abs.(dims_old[levels] - exact_spectrum(levels_found)[levels]) ./ nrms, label="before newton")
-lines!(ax, abs.(dims_new[levels] - exact_spectrum(levels_found)[levels]) ./ nrms, label="after newton")
-
-axislegend(ax, position=:lt)
-
-fig
-
-
-
-#################################################
-# section: EXPORT
-#################################################
-
-exprt = Dict(
-    "initial tensor" => A_crit_approximation,
-    "final tensor" => ju_to_py(A_crit_approximation_new_JU),
-    "gilt_pars" => gilt_pars
-)
-
-serialize("newton_results/chi=$chi/newton_result.data", exprt)
-
-#################################################
-# section: SPECTRUM
-#################################################
-
-function dgilt_new(δA)
-    return df(x -> gilt(x, accepted_elements, gilt_pars), A_crit_approximation_new_JU, δA; stp=stp, order=order)
+function dgilt_after_newton(δA)
+    return df(x -> gilt(x, accepted_elements, gilt_pars), A_crit_approximation_new_JU, δA; stp=stp, order=ord)
 end
 
 
 initial_vector = py_to_ju(random_Z2tens(A_crit_approximation));
-
-res_new = eigsolve(dgilt, initial_vector, 10, :LM; verbosity=3, issymmetric=false, ishermitian=false, krylovdim=30);
-res_new[1]
+eigensystem = eigsolve(dgilt_after_newton, initial_vector, eigensystem_size, :LM; verbosity=verbosity, issymmetric=false, ishermitian=false, krylovdim=30);
 
 
-#############################################################################
-# section: CHECKING THE NUMBER OF BOND REPETITIONS AND THE RECURSION DEPTH
-#############################################################################
-
-A1, _ = py"gilttnr_step"(A_crit_approximation, 1.0, gilt_pars);
-
-tmp = py"depth_dictionary"
-
-recursion_depth = Dict(
-    "S" => tmp[(1, "S")],
-    "N" => tmp[(1, "N")],
-    "E" => tmp[(1, "E")],
-    "W" => tmp[(1, "W")]
-)
-
-serialize(flow_path * "/recursion_depth.data", recursion_depth)
-
-gilt_pars = Dict(
-    "gilt_eps" => gilt_eps,
-    "cg_chis" => collect(1:chi),
-    "cg_eps" => cg_eps,
-    "verbosity" => 0,
+result = Dict(
+    "A" => ju_to_py(A_crit_approximation_new_JU),
+    "A_init" => A_crit_approximation,
+    "eigensystem" => eigensystem,
+    "eigensystem_init" => eigensystem_init,
     "bond_repetitions" => 2,
-    "recursion_depth" => recursion_depth,
-    "rotate" => rotate
+    "recursion_depth" => recursion_depth
 )
+
+serialize("newton/" * gilt_pars_identifier(gilt_pars) * "__newton_result.data", result)
+
+println("EIGENVALUES:")
+for val in eigensystem[1]
+    println(val)
+end
+
+
+

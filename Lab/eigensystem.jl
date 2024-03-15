@@ -4,6 +4,7 @@
 # - FUNCTIONS
 # - EIGENVALUES
 
+
 ################################################
 # section: EXPERIMENT INIT
 ################################################
@@ -147,7 +148,9 @@ res = eigsolve(dgilt, initial_vector, N, :LM; verbosity=verbosity, issymmetric=f
 
 result = Dict(
     "A" => A_crit_approximation,
-    "eigensystem" => res
+    "eigensystem" => res,
+    "bond_repetitions" => bond_repetitions,
+    "recursion_depth" => recursion_depth
 )
 
 serialize("eigensystems/" * gilt_pars_identifier(gilt_pars) * "__eigensystem.data", result)
