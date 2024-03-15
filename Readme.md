@@ -46,7 +46,7 @@ julia Lab/script_name.jl --help
 - ```install_packages.jl``` - script that installs all the necessary dependencies and creates the necessary directories.
 - ```KrylovTechnical.jl``` - technical code that provides a minimal implementation of Z2 invariant tensors in Julia. This solves the problem of ```KrylovKit``` throwing a segmentation fault while working with PyObjects.
 - ```NumDifferentiation.jl``` - provides the function that performs numerical differentiation.
-- ```Tools.jl``` - Contains user-dedicated functions. These are described at the top of the file.     
+- ```Tools.jl``` - Contains user-dedicated functions. These are listed at the top of the file.     
 - ```IsingExactLevels``` and ```IsingEvenExactLevels``` - data about exact 2d Ising spectrum.
 - ```Lab.ipynb``` - playground.
 
