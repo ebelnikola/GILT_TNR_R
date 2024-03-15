@@ -30,7 +30,7 @@ Contains scripts for computations:
  
 - ```differentiability_test.jl``` performs differentiability tests of the GiltTNR algorithm. Fixes ```bond_repetitions``` and ```recursion_depth```. Then, chooses a random direction $v$ and computes the numerical derivative $\Delta_n=(GiltTNR(A+s_n v/2)-GiltTNR(A-s_n v/2))/s_n$, where $s_n=10^{-3-0.05n}$. Plots $|\Delta_{n+1}-\Delta_n|/|\Delta_n|$ vs $n$ and saves this plot into the "results" directory. The approximate minimum of this plot should be chosen as the step size in ```newton.jl```. If parameter ```N``` is passed, the script will perform the test for ```N``` random directions. 
 
-- ```eigensystem.jl``` gets the largest eigenvalues and the corresponding eigenvectors of GiltTNR linearised around some initial approximation of the critical tensor (given by ```relT``` and ```number_of_initial_steps```). Saves the resulting tensor and the eigensystem to ```eigensystems```. Note that script will fix ```bond_repetitions``` and ```recursion_depth```. These parameters will be saved together with the other output.  
+- ```eigensystem.jl``` gets the largest eigenvalues and the corresponding eigenvectors of GiltTNR linearised around some initial approximation of the critical tensor (given by ```relT``` and ```number_of_initial_steps```). Saves the resulting tensor and the eigensystem to ```eigensystems```. Note that the script will fix ```bond_repetitions``` and ```recursion_depth```. These parameters will be saved together with the other output.  
 
 - ```newton.jl``` (assumes that ```rotation=true```) repeats the computation from ```eigensystem.jl```. Then, it finds the critical tensor using Newton's method and computes the eigensystem for the linearisation of GiltTNR around this tensor. Saves the resulting tensor and the eigensystem to the "newton" directory. It also saves Newton's method convergence plot to the same directory and the singular values trajectory plot starting from the found tensor. Note that the found critical tensor is the fixed point for gilt with fixed ```bond_repetitions``` and ```recursion_depth```. These parameters will be saved together with the other output.
 
@@ -48,6 +48,7 @@ julia Lab/script_name.jl --help
 - ```NumDifferentiation.jl``` - provides the function that performs numerical differentiation.
 - ```Tools.jl``` - Contains user-dedicated functions. These are described at the top of the file.     
 - ```IsingExactLevels``` and ```IsingEvenExactLevels``` - data about exact 2d Ising spectrum.
+- ```Lab.ipynb``` - playground.
 
 # Performing the computations
  
@@ -89,7 +90,7 @@ Let us try to use the 5th tensor as the initial approximation:
 julia Lab/newton.jl --chi 10 --gilt_eps 1e-4 --relT 1.0 --number_of_initial_steps 5 --N 23
 ```
 
-(should work!)
+It works! After this is done one may also check the improvement of the accuracy of the scaling dimensions found by diagonalizing the transfer matrix (see the computation in the Lab notebook). 
 
 
 
