@@ -213,6 +213,13 @@ initial_vector = py_to_ju(random_Z2tens(A_crit_approximation));
 eigensystem_init = eigsolve(dgilt, initial_vector, eigensystem_size, :LM; verbosity=verbosity, issymmetric=false, ishermitian=false, krylovdim=30);
 
 
+println("EIGENVALUES (INITIAL):")
+for val in eigensystem_init[1]
+    println(val)
+end
+
+
+
 jac_approximation_non_orthogonal_basis, non_orthogonal_normalised_basis = build_jacobian_approximation(eigensystem_init[2], eigensystem_init[1]);
 Graham_Schmidt_matrix, orthonormal_basis = build_Graham_Schmidt_matrix(non_orthogonal_normalised_basis);
 jac_approximation = Graham_Schmidt_matrix^(-1) * jac_approximation_non_orthogonal_basis * Graham_Schmidt_matrix;

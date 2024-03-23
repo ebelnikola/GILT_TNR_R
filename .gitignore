@@ -10,3 +10,5 @@
 # particular files
 nohup.out
 
+# temporary files 
+**copy.jl
