@@ -58,6 +58,7 @@ function random_Z2tens(chi::Int64)
     return t
 end
 
+
 py"""
 def check_sums_of_columns(U):
     Umat=U.to_ndarray()
@@ -123,7 +124,20 @@ function fix_continuous_gauge(A)
     return A, H, V, SH, SV
 end
 
+function fix_continuous_gauge(A::Array)
+    tensors = [A, A]
 
+    environment = Hermitian(environment_for_vertical_gauge(tensors))
+    decomposition = eigen(environment; sortby=x -> -abs(x))
+    SV, V = decomposition.values, decomposition.vectors
+    A = ncon([A, V, V], [[-1, 2, -3, 4], [2, -2], [4, -4]])
+
+    environment = Hermitian(environment_for_horizontal_gauge(tensors))
+    decomposition = eigen(environment; sortby=x -> -abs(x))
+    SH, H = decomposition.values, decomposition.vectors
+    A = ncon([A, H, H], [[1, -2, 3, -4], [1, -1], [3, -3]])
+    return A, H, V, SH, SV
+end
 
 #=for _ = 1:1000
     chi = rand([10, 20, 30, 40])
@@ -176,6 +190,20 @@ function list_of_allowed_elements(A; tol=1e-7)
         condition2 = !(ind[1] == ind[3] && ind[2] == ind[4])
         if condition1 && condition2
             push!(element_lists[Threads.threadid()], (ind, AA[ind]))
+        end
+    end
+    return flatten_the_vec_of_vec(element_lists)
+end
+
+
+function list_of_allowed_elements(A::Array; tol=1e-7)
+    number_of_threads = Threads.nthreads()
+    element_lists = [Tuple{CartesianIndex{4},Float64}[] for _ in 1:number_of_threads]
+    Threads.@threads for ind = CartesianIndices(size(A))
+        condition1 = abs(A[ind]) > tol
+        condition2 = !(ind[1] == ind[3] && ind[2] == ind[4])
+        if condition1 && condition2
+            push!(element_lists[Threads.threadid()], (ind, A[ind]))
         end
     end
     return flatten_the_vec_of_vec(element_lists)
@@ -270,6 +298,21 @@ function get_HV_and_indices(A; tol=1e-7)
     return H, V, accepted_elements
 end
 
+function get_HV_and_indices(A::Array; tol=1e-7)
+    # get the list of nonzero tensor elements
+    l = list_of_allowed_elements(A; tol=tol)
+
+    # order the list in the decreasing order
+    sort!(l, by=x -> -abs(x[2]))
+    dimH, dimV, _, _ = size(A)
+
+    preM, preb, accepted_elements = construct_linear_system(l, dimH, dimV)
+    hv = solve_linear_system(preM, preb)
+    H, V = bool_vec_to_HV(hv, dimH)
+
+    return H, V, accepted_elements
+end
+
 function fix_discrete_gauge(A; tol=1e-7)
     H, V, accepted_elements = get_HV_and_indices(A; tol=tol)
 
@@ -286,6 +329,17 @@ function fix_discrete_gauge(A; tol=1e-7)
 
     A = ncon([A, HZ2.conj(), VZ2.conj(), HZ2, VZ2], [[1, 2, 3, 4], [1, -1], [2, -2], [3, -3], [4, -4]])
     return A, accepted_elements, HZ2, VZ2
+end
+
+
+function fix_discrete_gauge(A::Array; tol=1e-7)
+    H, V, accepted_elements = get_HV_and_indices(A; tol=tol)
+
+    H = diagm(H)
+    V = diagm(V)
+
+    A = ncon([A, H, V, H, V], [[1, 2, 3, 4], [1, -1], [2, -2], [3, -3], [4, -4]])
+    return A, accepted_elements, H, V
 end
 
 # If the list of independent elements is already known, we may speed up the construction
@@ -305,10 +359,34 @@ function new_list_of_elements(A, list_of_elements; tol=1e-7)
     return list_of_elements_new
 end
 
+
+function new_list_of_elements(A::Array, list_of_elements; tol=1e-7)
+    list_of_elements_new = Vector{Tuple{CartesianIndex{4},Float64}}(undef, length(list_of_elements))
+    for ind in eachindex(list_of_elements)
+        new_entry = A[list_of_elements[ind][1]]
+        if abs(new_entry) < tol
+            @warn "new_list_of_elements: new entry is below the threshold. It was $(list_of_elements[ind][2]) and became $(new_entry). Index $(list_of_elements[ind][1]) "
+        end
+        list_of_elements_new[ind] = (list_of_elements[ind][1], new_entry)
+    end
+    return list_of_elements_new
+end
+
 function get_HV_and_indices(A, list_of_elements; tol=1e-7)
     list_of_elements = new_list_of_elements(A, list_of_elements; tol=tol)
     dimH = sum(A.shape[1, :])
     dimV = sum(A.shape[1, :])
+
+    preM, preb, accepted_elements = construct_linear_system(list_of_elements, dimH, dimV)
+    hv = solve_linear_system(preM, preb)
+    H, V = bool_vec_to_HV(hv, dimH)
+
+    return H, V, accepted_elements
+end
+
+function get_HV_and_indices(A::Array, list_of_elements; tol=1e-7)
+    list_of_elements = new_list_of_elements(A, list_of_elements; tol=tol)
+    dimH, dimV, _ = size(A)
 
     preM, preb, accepted_elements = construct_linear_system(list_of_elements, dimH, dimV)
     hv = solve_linear_system(preM, preb)
@@ -333,6 +411,17 @@ function fix_discrete_gauge(A, list_of_elements; tol=1e-7)
 
     A = ncon([A, HZ2.conj(), VZ2.conj(), HZ2, VZ2], [[1, 2, 3, 4], [1, -1], [2, -2], [3, -3], [4, -4]])
     return A, accepted_elements, HZ2, VZ2
+end
+
+function fix_discrete_gauge(A::Array, list_of_elements; tol=1e-7)
+    H, V, accepted_elements = get_HV_and_indices(A, list_of_elements; tol=tol)
+
+    H = diagm(H)
+    V = diagm(V)
+
+
+    A = ncon([A, H, V, H, V], [[1, 2, 3, 4], [1, -1], [2, -2], [3, -3], [4, -4]])
+    return A, accepted_elements, H, V
 end
 
 
