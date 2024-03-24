@@ -79,6 +79,7 @@ A_crit_approximation, Hc, Vc, SHc, SVc = fix_continuous_gauge(A_crit_approximati
 A_crit_approximation, accepted_elements = fix_discrete_gauge(A_crit_approximation; tol=1e-7);
 
 A_crit_approximation /= A_crit_approximation.norm();
+A_crit_approximation_JU = py_to_ju(A_crit_approximation);
 
 
 
@@ -87,11 +88,6 @@ A_crit_approximation /= A_crit_approximation.norm();
 ################################################
 
 A1, _ = py"gilttnr_step"(A_crit_approximation, 0.0, gilt_pars);
-
-g = A1.norm();
-A_crit_approximation = g^(-1 / 3) * A_crit_approximation;
-A_crit_approximation_JU = py_to_ju(A_crit_approximation);
-
 
 tmp = py"depth_dictionary"
 
@@ -118,18 +114,20 @@ gilt_pars = Dict(
 
 function gilt(A, pars)
     A = ju_to_py(A)
-    A, log_fact, _ = py"gilttnr_step"(A, 0.0, pars)
+    A, _, _ = py"gilttnr_step"(A, 0.0, pars)
     A, _ = fix_continuous_gauge(A)
     A, _ = fix_discrete_gauge(A)
-    return py_to_ju(exp(log_fact) * A)
+    A /= A.norm()
+    return py_to_ju(A)
 end
 
 function gilt(A, list_of_elements, pars)
     A = ju_to_py(A)
-    A, log_fact, _ = py"gilttnr_step"(A, 0.0, pars)
+    A, _, _ = py"gilttnr_step"(A, 0.0, pars)
     A, _ = fix_continuous_gauge(A)
     A, _ = fix_discrete_gauge(A, list_of_elements)
-    return py_to_ju(exp(log_fact) * A)
+    A /= A.norm()
+    return py_to_ju(A)
 end
 
 
@@ -149,7 +147,7 @@ res = eigsolve(dgilt, initial_vector, N, :LM; verbosity=verbosity, issymmetric=f
 result = Dict(
     "A" => A_crit_approximation,
     "eigensystem" => res,
-    "bond_repetitions" => bond_repetitions,
+    "bond_repetitions" => 2,
     "recursion_depth" => recursion_depth
 )
 
