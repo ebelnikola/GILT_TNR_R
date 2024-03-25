@@ -7,6 +7,23 @@ from .tensorcommon import TensorCommon
 from collections.abc import Iterable
 
 
+
+###### Added by Kolia block
+###### Routines for fixing the positive signs in abelian matricies
+def phase_factor(x):
+    return x/np.sqrt(np.conj(x)*x)
+
+
+def fix_signs_in_vector(v):
+    s=v.sum()
+    if s==0:
+        factor=1
+    else:
+        factor=np.conjugate(phase_factor(s))
+    v*=factor
+    return factor
+##### End of the added by Kolia block    
+
 class Tensor(TensorCommon, np.ndarray):
     """A wrapper class for NumPy arrays.
 
@@ -452,6 +469,19 @@ class Tensor(TensorCommon, np.ndarray):
         if not isinstance(result, TensorCommon):
             result = type(self).from_ndarray(result)
         return result
+    
+
+    ###### Added by Kolia block
+    ###### Routines for fixing the positive signs in abelian matricies
+    def fix_signs_of_columns(self):
+        num_of_vectors=self.shape[-1]
+        signs=np.apply_along_axis(fix_signs_in_vector,0,self.reshape((-1,num_of_vectors)))   
+        return type(self).from_ndarray(signs)   
+        
+    ###### End of added by Kolia block 
+
+
+
 
     def matrix_eig(
         self,
@@ -525,6 +555,9 @@ class Tensor(TensorCommon, np.ndarray):
             S = type(self).from_ndarray(S)
         if not isinstance(U, TensorCommon):
             U = type(self).from_ndarray(U)
+
+        U.fix_signs_of_columns() #added by Kolia
+
         return S, U, rel_err
 
     def matrix_svd(
@@ -604,4 +637,10 @@ class Tensor(TensorCommon, np.ndarray):
             U = type(self).from_ndarray(U)
         if not isinstance(V, TensorCommon):
             V = type(self).from_ndarray(V)
+
+        signs = U.fix_signs_of_columns();  # added by Kolia
+        V=V.multiply_diag(signs,0,direction="l");  # added by Kolia
+
+
+
         return U, S, V, rel_err

@@ -1,5 +1,6 @@
 #folders:
 .vscode/
+bin/
 
 # Julia project files
 *.toml
@@ -13,3 +14,4 @@ nohup.out
 # temporary files 
 **copy.jl
 **_tmp.jl
+

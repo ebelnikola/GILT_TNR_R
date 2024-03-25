@@ -212,7 +212,6 @@ for sample in samples_of_derivative_computation
     lines!(ax, stp_sizes[1:end-1], norm.(variation(sample)) ./ norm.(sample[1:end-1]))
 end
 
-fig
 
 name = gilt_pars_identifier(gilt_pars)
 

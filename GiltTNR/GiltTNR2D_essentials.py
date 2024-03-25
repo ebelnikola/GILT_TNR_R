@@ -157,6 +157,8 @@ def trg(A1, A2, log_fact, pars, **kwargs):
     B1, SB, B2, err = A1.split([0,1], [2,3], chis=pars["cg_chis"],
                            eps=pars["cg_eps"], return_rel_err=True,return_sings=True) # added return sings
 
+    #check_sums_of_columns(B1)
+
     err_A1_split=err
 
     if verbose:
@@ -172,6 +174,9 @@ def trg(A1, A2, log_fact, pars, **kwargs):
     C1, SC, C2, err = A2.split([2,1], [0,3], chis=pars["cg_chis"],
                            eps=pars["cg_eps"], return_rel_err=True,return_sings=True) # added return sings
     
+    #check_sums_of_columns(C1)
+
+
     err_A2_split=err
 
     if verbose:
@@ -348,6 +353,8 @@ def apply_gilt(A1, A2, pars, where=None):
     Rp1, s, Rp2, spliterr = Rp.split(0, 1, eps=spliteps, return_rel_err=True,
                                      return_sings=True)
 
+    #check_sums_of_columns(Rp1)
+
 
     global convergence_eps
     if (s-1).abs().max() < convergence_eps:
@@ -392,6 +399,9 @@ def get_envspec(A1, A2, pars, where=None):
     S, U = E.eig([0,1], [2,3], hermitian=True)
     # S are all non-negative, taking abs is just for numerical errors
     # around zero.
+
+    #check_sums_of_columns(U)
+
 
     # Eigenvalues should be scaled down as we normalised the Envirenment (Kolia)
     S = S.abs().sqrt()*nrm
@@ -467,6 +477,9 @@ def optimize_Rp(U, S, pars, **kwargs):
     spliteps = gilt_eps*1e-3
      
     u, s, v = Rp.svd(0, 1, eps=spliteps)
+    
+    #check_sums_of_columns(u)
+
 
 
     # If the singular value spectrum of the Rp matrix that was last
@@ -488,6 +501,10 @@ def optimize_Rp(U, S, pars, **kwargs):
         Uuvs = ncon((U, us, vs), ([1,2,-3], [1,-1], [-2,2])) 
         UuvsS = Uuvs.multiply_diag(S, 2, direction="left")
         Uinner, Sinner = UuvsS.svd([0,1], [2])[0:2]
+
+        #check_sums_of_columns(Uinner)
+
+
         Sinner /= Sinner.sum()
         if "recursion_depth" in pars: 
             pars["recursion_depth"][pars["where"]]-=1
