@@ -48,11 +48,19 @@ settings = ArgParseSettings()
     "--N"
     help = "Number of eigenvalues to compute"
     arg_type = Int64
-    default = 10
+    default = 5
     "--verbosity"
     help = "Verbosity of the eigensolver"
     arg_type = Int64
     default = 3
+    "--Z2_odd_sector"
+    help = "If true the algorithm will find eigenvectors in Z2 breaking sector"
+    arg_type = Bool
+    default = false
+    "--krylovdim"
+    help = "Dimension of the Krylov space used in the eigenvalue computation. This parameter should me larger than N."
+    arg_type = Int64
+    default = 30
 end
 
 pars = parse_args(settings; as_symbols=true)
@@ -75,21 +83,33 @@ gilt_pars = Dict(
 )
 
 A_crit_approximation = trajectory(relT, number_of_initial_steps, gilt_pars)["A"][end];
-A_crit_approximation, Hc, Vc, SHc, SVc = fix_continuous_gauge(A_crit_approximation);
+A_crit_approximation_Z2_broken = A_crit_approximation.to_ndarray();
+
+A_crit_approximation, _ = fix_continuous_gauge(A_crit_approximation);
 A_crit_approximation, accepted_elements = fix_discrete_gauge(A_crit_approximation; tol=1e-7);
+
+A_crit_approximation_Z2_broken, _ = fix_continuous_gauge(A_crit_approximation_Z2_broken);
+A_crit_approximation_Z2_broken, accepted_elements_Z2_broken = fix_discrete_gauge(A_crit_approximation_Z2_broken; tol=1e-7);
+
 
 A_crit_approximation /= A_crit_approximation.norm();
 A_crit_approximation_JU = py_to_ju(A_crit_approximation);
-
-
+normalize!(A_crit_approximation_Z2_broken);
 
 ################################################
 # section: RECURSION DEPTH FIXING AND NORMALISATION
 ################################################
 
-A1, _ = py"gilttnr_step"(A_crit_approximation, 0.0, gilt_pars);
 
+py"""
+def gilttnr_step_broken(A,log_fact,pars):
+    A=Tensor.from_ndarray(A)
+    return gilttnr_step(A,log_fact,pars)
+"""
+
+A1, _ = py"gilttnr_step"(A_crit_approximation, 0.0, gilt_pars);
 tmp = py"depth_dictionary"
+
 
 recursion_depth = Dict(
     "S" => tmp[(1, "S")],
@@ -121,6 +141,15 @@ function gilt(A, pars)
     return py_to_ju(A)
 end
 
+
+function gilt(A::Array, pars)
+    A, _, _ = py"gilttnr_step_broken"(A, 0.0, pars)
+    A, _ = fix_continuous_gauge(A)
+    A, _ = fix_discrete_gauge(A)
+    normalize!(A)
+    return A
+end
+
 function gilt(A, list_of_elements, pars)
     A = ju_to_py(A)
     A, _, _ = py"gilttnr_step"(A, 0.0, pars)
@@ -130,18 +159,34 @@ function gilt(A, list_of_elements, pars)
     return py_to_ju(A)
 end
 
+function gilt(A::Array, list_of_elements, pars)
+    A, _, _ = py"gilttnr_step_broken"(A, 0.0, pars)
+    A, _ = fix_continuous_gauge(A)
+    A, _ = fix_discrete_gauge(A, list_of_elements)
+    normalize!(A)
+    return A
+end
+
 
 function dgilt(δA)
     return df(x -> gilt(x, accepted_elements, gilt_pars), A_crit_approximation_JU, δA; stp=stp, order=ord)
 end
 
 
+
 #################################################
 # section: EIGENVALUES
 #################################################
 
-initial_vector = py_to_ju(random_Z2tens(A_crit_approximation));
-res = eigsolve(dgilt, initial_vector, N, :LM; verbosity=verbosity, issymmetric=false, ishermitian=false, krylovdim=30);
+
+if Z2_odd_sector
+    initial_vector = normalize!(2 .* rand(chi, chi, chi, chi) .- 1)
+else
+    initial_vector = py_to_ju(random_Z2tens(A_crit_approximation))
+end;
+
+
+res = eigsolve(dgilt, initial_vector, N, :LM; verbosity=verbosity, issymmetric=false, ishermitian=false, krylovdim=krylovdim);
 
 
 result = Dict(
@@ -151,7 +196,7 @@ result = Dict(
     "recursion_depth" => recursion_depth
 )
 
-serialize("eigensystems/" * gilt_pars_identifier(gilt_pars) * "__eigensystem.data", result)
+serialize("eigensystems/" * gilt_pars_identifier(gilt_pars) * "__Z2_odd_sector=$(Z2_odd_sector)_eigensystem.data", result)
 
 println("EIGENVALUES:")
 for val in res[1]

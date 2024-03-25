@@ -343,13 +343,12 @@ def apply_gilt(A1, A2, pars, where=None):
         Rmatrices[(where,pars["lap"])]=Rp
 
 
-    if "bond_repetitions" in pars:
-        spliteps=0.
-    else:
-        spliteps = pars["gilt_eps"]*1e-3
-     
+    
+    spliteps = pars["gilt_eps"]*1e-3
     Rp1, s, Rp2, spliterr = Rp.split(0, 1, eps=spliteps, return_rel_err=True,
                                      return_sings=True)
+
+
     global convergence_eps
     if (s-1).abs().max() < convergence_eps:
         done = True
@@ -465,10 +464,7 @@ def optimize_Rp(U, S, pars, **kwargs):
 
     # Recursively keep absorbing Rp into U, and repeating the procedure
     # to build a new Rp, until the leg can not be truncated further.
-    if "recursion_depth" in pars:
-        spliteps=0.
-    else:
-        spliteps = gilt_eps*1e-3
+    spliteps = gilt_eps*1e-3
      
     u, s, v = Rp.svd(0, 1, eps=spliteps)
 

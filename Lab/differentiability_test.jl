@@ -37,7 +37,7 @@ settings = ArgParseSettings()
     arg_type = Float64
     default = 1e-10
     "--rotate"
-    help = "If true the algorithm will perform a rotation by 90 degrees after each GILT TNR step"
+    help = "If true, the algorithm will perform a rotation by 90 degrees after each GILT TNR step"
     arg_type = Bool
     default = false
     "--ord"
@@ -48,6 +48,10 @@ settings = ArgParseSettings()
     help = "Number of randomised tests"
     arg_type = Int64
     default = 1
+    "--discrete_gauge_fixing"
+    help = "Is true, the algorithm will add discrete gauge fixing to the procedure. This should not change the result."
+    arg_type = Bool
+    default = false
 end
 
 pars = parse_args(settings; as_symbols=true)
@@ -93,8 +97,16 @@ function gilt(A, list_of_elements, pars)
     return A
 end
 
+function gilt_no_dgf(A, pars)
+    A, _ = py"gilttnr_step"(A, 1.0, pars)
+    A, _ = fix_continuous_gauge(A)
+    A = A.to_ndarray()
+    return A
+end
+
 gilt_tensor = x -> gilt(x, accepted_elements, gilt_pars);
 
+gilt_tensor_no_dgf = x -> gilt_no_dgf(x, gilt_pars);
 
 
 #############################################################################
@@ -148,11 +160,19 @@ end
 # section: COMPUTE DERIVATIVES
 #############################################
 
+samples_of_derivative_computation = Any[]
+
 stp_sizes = 10 .^ (collect(-3:-0.05:-8))
-fun = gilt_tensor
+
+if discrete_gauge_fixing
+    fun = gilt_tensor
+else
+    fun = gilt_tensor_no_dgf
+end
 
 function compute_derivatives()
     v = differentiation_direction()
+
     derivatives = Any[]
 
     cnt = 0
@@ -168,7 +188,6 @@ function compute_derivatives()
     return derivatives
 end
 
-samples_of_derivative_computation = Any[]
 for i = 1:N
     push!(samples_of_derivative_computation, compute_derivatives())
 end
@@ -192,6 +211,8 @@ ax = Axis(fig[1, 1],
 for sample in samples_of_derivative_computation
     lines!(ax, stp_sizes[1:end-1], norm.(variation(sample)) ./ norm.(sample[1:end-1]))
 end
+
+fig
 
 name = gilt_pars_identifier(gilt_pars)
 

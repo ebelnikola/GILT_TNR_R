@@ -124,17 +124,33 @@ function fix_continuous_gauge(A)
     return A, H, V, SH, SV
 end
 
+
+
+function correct_phase_of_a_vec(v)
+    v .*= sign(sum(v))'
+end
+
+function correct_phase_of_each_column(V)
+    for i in axes(V, 2)
+        correct_phase_of_a_vec(@view V[:, i])
+    end
+    return V
+end
+
+
 function fix_continuous_gauge(A::Array)
     tensors = [A, A]
 
     environment = Hermitian(environment_for_vertical_gauge(tensors))
     decomposition = eigen(environment; sortby=x -> -abs(x))
     SV, V = decomposition.values, decomposition.vectors
+    correct_phase_of_each_column(V)
     A = ncon([A, V, V], [[-1, 2, -3, 4], [2, -2], [4, -4]])
 
     environment = Hermitian(environment_for_horizontal_gauge(tensors))
     decomposition = eigen(environment; sortby=x -> -abs(x))
     SH, H = decomposition.values, decomposition.vectors
+    correct_phase_of_each_column(H)
     A = ncon([A, H, H], [[1, -2, 3, -4], [1, -1], [3, -3]])
     return A, H, V, SH, SV
 end
@@ -256,6 +272,33 @@ function construct_linear_system(list_of_elements, dimH, dimV)
     end
 end
 
+
+function construct_linear_system_noZ2(list_of_elements, dimH, dimV)
+    rows_num = dimH + dimV - 2
+    preM = zeros(Bool, rows_num, dimH + dimV)
+    preb = zeros(Bool, rows_num)
+    accepted_elements = Vector{Tuple{CartesianIndex,Float64}}(undef, rows_num)
+    cnt::Int64 = 1
+    for el in list_of_elements
+        if isindependent(el[1], preM[1:cnt, :], dimH, dimV)
+            preM[cnt, :] .= construct_a_raw_from_indices(el[1], dimH, dimV)
+            preb[cnt] = el[2] < 0
+            accepted_elements[cnt] = el
+            cnt += 1
+        end
+
+        if cnt > rows_num
+            break
+        end
+    end
+    if cnt > rows_num
+        return preM, preb, accepted_elements
+    else
+        @warn "construct_linear_system: unable to find $rows_num independent rows, will fix only $(cnt-1) dofs"
+        return preM[1:cnt-1, :], preb[1:cnt-1], accepted_elements[1:cnt-1]
+    end
+end
+
 using AbstractAlgebra
 
 const global ℤ₂ = GF(2)
@@ -306,7 +349,7 @@ function get_HV_and_indices(A::Array; tol=1e-7)
     sort!(l, by=x -> -abs(x[2]))
     dimH, dimV, _, _ = size(A)
 
-    preM, preb, accepted_elements = construct_linear_system(l, dimH, dimV)
+    preM, preb, accepted_elements = construct_linear_system_noZ2(l, dimH, dimV)
     hv = solve_linear_system(preM, preb)
     H, V = bool_vec_to_HV(hv, dimH)
 
