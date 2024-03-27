@@ -1,17 +1,20 @@
-#folders:
+# Folders:
 .vscode/
 bin/
 
 # Julia project files
 *.toml
 *.log
+
+
+# Data
 *.pdf
 *.data
+**.csv
 
-# particular files
+# nohup output file
 nohup.out
 
 # temporary files 
 **copy.jl
 **_tmp.jl
-
