@@ -47,7 +47,7 @@ settings = ArgParseSettings()
     "--N"
     help = "Number of randomised tests"
     arg_type = Int64
-    default = 1
+    default = 2
     "--discrete_gauge_fixing"
     help = "Is true, the algorithm will add discrete gauge fixing to the procedure. This should not change the result."
     arg_type = Bool
@@ -170,6 +170,7 @@ else
     fun = gilt_tensor_no_dgf
 end
 
+
 function compute_derivatives()
     v = differentiation_direction()
 
@@ -212,6 +213,7 @@ for sample in samples_of_derivative_computation
     lines!(ax, stp_sizes[1:end-1], norm.(variation(sample)) ./ norm.(sample[1:end-1]))
 end
 
+fig
 
 name = gilt_pars_identifier(gilt_pars)
 

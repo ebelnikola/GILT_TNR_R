@@ -17,11 +17,11 @@ settings = ArgParseSettings()
     "--chi"
     help = "The bond dimension"
     arg_type = Int64
-    default = 10
+    default = 20
     "--gilt_eps"
     help = "The threshold used in the GILT algorithm"
     arg_type = Float64
-    default = 1e-4
+    default = 2e-5
     "--relT"
     help = "The realtive temperature of the initial tensor"
     arg_type = Float64
@@ -42,14 +42,18 @@ settings = ArgParseSettings()
     help = "step used in differentiation algorithm"
     arg_type = Float64
     default = 5e-6
-    "--eigensystem_size"
-    help = "Number of eigenvectors and eigenvalues ot be used to approximate the jacobian"
+    "--eigensystem_size_for_jacobian"
+    help = "Number of eigenvectors and eigenvalues to be used to approximate the jacobian"
     arg_type = Int64
     default = 10
+    "--eigensystem_size_after_newton"
+    help = "Number of eigenvectors and eigenvalues to be evaluated after the Newton method is applied"
+    arg_type = Int64
+    default = 30
     "--N"
     help = "Number of steps performed by the Newton algorithm"
     arg_type = Int64
-    default = 20
+    default = 25
     "--verbosity"
     help = "Verbosity of the eigensolver"
     arg_type = Int64
@@ -68,7 +72,6 @@ include("../GaugeFixing.jl");
 include("../KrylovTechnical.jl");
 
 
-
 gilt_pars = Dict(
     "gilt_eps" => gilt_eps,
     "cg_chis" => collect(1:chi),
@@ -82,6 +85,7 @@ A_crit_approximation, Hc, Vc, SHc, SVc = fix_continuous_gauge(A_crit_approximati
 A_crit_approximation, accepted_elements = fix_discrete_gauge(A_crit_approximation; tol=1e-7);
 
 A_crit_approximation /= A_crit_approximation.norm();
+A_crit_approximation_JU = py_to_ju(A_crit_approximation);
 
 
 
@@ -90,10 +94,6 @@ A_crit_approximation /= A_crit_approximation.norm();
 ################################################
 
 A1, _ = py"gilttnr_step"(A_crit_approximation, 0.0, gilt_pars);
-
-g = A1.norm();
-A_crit_approximation = g^(-1 / 3) * A_crit_approximation;
-A_crit_approximation_JU = py_to_ju(A_crit_approximation);
 
 
 tmp = py"depth_dictionary"
@@ -104,6 +104,14 @@ recursion_depth = Dict(
     "E" => tmp[(1, "E")],
     "W" => tmp[(1, "W")]
 )
+
+recursion_depth = Dict(
+    "S" => 70,
+    "N" => 70,
+    "E" => 70,
+    "W" => 70
+)
+
 
 gilt_pars = Dict(
     "gilt_eps" => gilt_eps,
@@ -121,18 +129,20 @@ gilt_pars = Dict(
 
 function gilt(A, pars)
     A = ju_to_py(A)
-    A, log_fact, _ = py"gilttnr_step"(A, 0.0, pars)
+    A, _ = py"gilttnr_step"(A, 0.0, pars)
     A, _ = fix_continuous_gauge(A)
     A, _ = fix_discrete_gauge(A)
-    return py_to_ju(exp(log_fact) * A)
+    A /= A.norm()
+    return py_to_ju(A)
 end
 
 function gilt(A, list_of_elements, pars)
     A = ju_to_py(A)
-    A, log_fact, _ = py"gilttnr_step"(A, 0.0, pars)
+    A, _ = py"gilttnr_step"(A, 0.0, pars)
     A, _ = fix_continuous_gauge(A)
     A, _ = fix_discrete_gauge(A, list_of_elements)
-    return py_to_ju(exp(log_fact) * A)
+    A /= A.norm()
+    return py_to_ju(A)
 end
 
 
@@ -202,15 +212,13 @@ function build_Graham_Schmidt_matrix(non_orthogonal_normalised_basis::Vector{t})
 end
 
 
-
-
 #################################################
 # section: NEWTON
 #################################################
 
 
 initial_vector = py_to_ju(random_Z2tens(A_crit_approximation));
-eigensystem_init = eigsolve(dgilt, initial_vector, eigensystem_size, :LM; verbosity=verbosity, issymmetric=false, ishermitian=false, krylovdim=30);
+eigensystem_init = eigsolve(dgilt, initial_vector, eigensystem_size_for_jacobian, :LM; verbosity=verbosity, issymmetric=false, ishermitian=false, krylovdim=eigensystem_size_for_jacobian + 20);
 
 
 println("EIGENVALUES (INITIAL):")
@@ -218,11 +226,10 @@ for val in eigensystem_init[1]
     println(val)
 end
 
-
-
 jac_approximation_non_orthogonal_basis, non_orthogonal_normalised_basis = build_jacobian_approximation(eigensystem_init[2], eigensystem_init[1]);
 Graham_Schmidt_matrix, orthonormal_basis = build_Graham_Schmidt_matrix(non_orthogonal_normalised_basis);
 jac_approximation = Graham_Schmidt_matrix^(-1) * jac_approximation_non_orthogonal_basis * Graham_Schmidt_matrix;
+
 
 approximation_rank = length(eigensystem_init[1])
 
@@ -277,7 +284,9 @@ fig = plot_the_trajectory(
     gilt_pars;
     traj_len=50
 )
+
 save("newton/" * gilt_pars_identifier(gilt_pars) * "__trajectory_after_newton.pdf", fig)
+
 
 #################################################
 # section: EIGENVALUES
@@ -289,7 +298,7 @@ end
 
 
 initial_vector = py_to_ju(random_Z2tens(A_crit_approximation));
-eigensystem = eigsolve(dgilt_after_newton, initial_vector, eigensystem_size, :LM; verbosity=verbosity, issymmetric=false, ishermitian=false, krylovdim=30);
+eigensystem = eigsolve(dgilt_after_newton, initial_vector, eigensystem_size_after_newton, :LM; verbosity=verbosity, issymmetric=false, ishermitian=false, krylovdim=eigensystem_size_after_newton + 20);
 
 
 result = Dict(

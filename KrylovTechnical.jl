@@ -67,6 +67,19 @@ function py_to_ju(A)
     return Z2Tensor(deepcopy(A.sects), deepcopy(A.shape), deepcopy(A.qhape), deepcopy(A.dirs))
 end
 
+
+
+function extend_blocks_by_zeros(A::Z2Tensor, chi_new)
+    extended_sections = Dict{NTuple{4,Int64},Array}()
+    for (key, block) in A.sects
+        tmp = zeros(eltype(block), chi_new, chi_new, chi_new, chi_new)
+        chi_old = size(block, 1)
+        tmp[1:chi_old, 1:chi_old, 1:chi_old, 1:chi_old] .= block
+        extended_sections[key] = tmp
+    end
+    return Z2Tensor(extended_sections, fill(chi_new, 4, 2), A.qhape, A.dirs)
+end
+
 function ju_to_py(A)
     out = TENSZ2(
         A.shape,
@@ -107,6 +120,9 @@ end
         @warn "a problem"
     end
 end=#
+
+
+
 
 import Base.getindex
 
