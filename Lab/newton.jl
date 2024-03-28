@@ -17,11 +17,11 @@ settings = ArgParseSettings()
     "--chi"
     help = "The bond dimension"
     arg_type = Int64
-    default = 20
+    default = 30
     "--gilt_eps"
     help = "The threshold used in the GILT algorithm"
     arg_type = Float64
-    default = 2e-5
+    default = 4e-6
     "--relT"
     help = "The realtive temperature of the initial tensor"
     arg_type = Float64
@@ -53,7 +53,7 @@ settings = ArgParseSettings()
     "--N"
     help = "Number of steps performed by the Newton algorithm"
     arg_type = Int64
-    default = 25
+    default = 30
     "--verbosity"
     help = "Verbosity of the eigensolver"
     arg_type = Int64
@@ -106,10 +106,10 @@ recursion_depth = Dict(
 )
 
 recursion_depth = Dict(
-    "S" => 70,
-    "N" => 70,
-    "E" => 70,
-    "W" => 70
+    "S" => 100,
+    "N" => 100,
+    "E" => 100,
+    "W" => 100
 )
 
 
@@ -272,7 +272,6 @@ ax = Axis(fig[1, 1],
     yticklabelsize=20,);
 
 lines!(ax, variation(A_hist) .|> norm);
-
 
 save("newton/" * gilt_pars_identifier(gilt_pars) * "__newton_convergence_plot.pdf", fig)
 
