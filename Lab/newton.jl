@@ -19,17 +19,17 @@ settings = ArgParseSettings()
     arg_type = Int64
     default = 30
     "--gilt_eps"
-    help = "The threshold used in the GILT algorithm"
+    help = "The threshold used in the Gilt algorithm"
     arg_type = Float64
-    default = 4e-6
+    default = 2e-5
     "--relT"
     help = "The realtive temperature of the initial tensor"
     arg_type = Float64
-    default = 1.000013256035745
+    default = 1.00005520965904
     "--number_of_initial_steps"
     help = "Number of RG steps made to get an approximation of the critical tensor"
     arg_type = Int64
-    default = 15
+    default = 20
     "--cg_eps"
     help = "The threshold used in TRG steps to truncate the bonds"
     arg_type = Float64
@@ -80,7 +80,6 @@ gilt_pars = Dict(
     "rotate" => rotate
 )
 
-
 A_crit_approximation = trajectory(relT, number_of_initial_steps, gilt_pars)["A"][end];
 A_crit_approximation, Hc, Vc, SHc, SVc = fix_continuous_gauge(A_crit_approximation);
 A_crit_approximation, accepted_elements = fix_discrete_gauge(A_crit_approximation; tol=1e-7);
@@ -105,6 +104,9 @@ recursion_depth = Dict(
     "E" => tmp[(1, "E")],
     "W" => tmp[(1, "W")]
 )
+
+
+
 
 gilt_pars = Dict(
     "gilt_eps" => gilt_eps,
@@ -209,7 +211,6 @@ end
 # section: NEWTON
 #################################################
 
-
 initial_vector = py_to_ju(random_Z2tens(A_crit_approximation));
 eigensystem_init = eigsolve(dgilt, initial_vector, eigensystem_size_for_jacobian, :LM; verbosity=verbosity, issymmetric=false, ishermitian=false, krylovdim=eigensystem_size_for_jacobian + 20);
 
@@ -236,15 +237,15 @@ function factor(δA)
     return res
 end
 
+A_hist = [A_crit_approximation_JU];
+
+
 function newton_function(A)
     x_minus_f = A - gilt(A, accepted_elements, gilt_pars)
     initial_vector = py_to_ju(random_Z2tens(A_crit_approximation))
     correction = linsolve(factor, x_minus_f, initial_vector)[1]
     return A - correction
 end
-
-
-A_hist = [A_crit_approximation_JU];
 
 for i = 2:N
     push!(A_hist, newton_function(A_hist[i-1]))
