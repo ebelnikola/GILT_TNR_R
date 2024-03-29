@@ -25,11 +25,11 @@ settings = ArgParseSettings()
     "--relT"
     help = "The realtive temperature of the initial tensor"
     arg_type = Float64
-    default = 1.0
+    default = 1.000013256035745
     "--number_of_initial_steps"
     help = "Number of RG steps made to get an approximation of the critical tensor"
     arg_type = Int64
-    default = 5
+    default = 15
     "--cg_eps"
     help = "The threshold used in TRG steps to truncate the bonds"
     arg_type = Float64
@@ -80,6 +80,7 @@ gilt_pars = Dict(
     "rotate" => rotate
 )
 
+
 A_crit_approximation = trajectory(relT, number_of_initial_steps, gilt_pars)["A"][end];
 A_crit_approximation, Hc, Vc, SHc, SVc = fix_continuous_gauge(A_crit_approximation);
 A_crit_approximation, accepted_elements = fix_discrete_gauge(A_crit_approximation; tol=1e-7);
@@ -104,14 +105,6 @@ recursion_depth = Dict(
     "E" => tmp[(1, "E")],
     "W" => tmp[(1, "W")]
 )
-
-recursion_depth = Dict(
-    "S" => 100,
-    "N" => 100,
-    "E" => 100,
-    "W" => 100
-)
-
 
 gilt_pars = Dict(
     "gilt_eps" => gilt_eps,
