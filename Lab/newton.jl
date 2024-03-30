@@ -21,11 +21,11 @@ settings = ArgParseSettings()
     "--gilt_eps"
     help = "The threshold used in the Gilt algorithm"
     arg_type = Float64
-    default = 2e-5
+    default = 5e-6
     "--relT"
     help = "The realtive temperature of the initial tensor"
     arg_type = Float64
-    default = 1.00005520965904
+    default = 1.00001338
     "--number_of_initial_steps"
     help = "Number of RG steps made to get an approximation of the critical tensor"
     arg_type = Int64
@@ -53,7 +53,7 @@ settings = ArgParseSettings()
     "--N"
     help = "Number of steps performed by the Newton algorithm"
     arg_type = Int64
-    default = 30
+    default = 40
     "--verbosity"
     help = "Verbosity of the eigensolver"
     arg_type = Int64
@@ -72,6 +72,7 @@ include("../GaugeFixing.jl");
 include("../KrylovTechnical.jl");
 
 
+
 gilt_pars = Dict(
     "gilt_eps" => gilt_eps,
     "cg_chis" => collect(1:chi),
@@ -79,6 +80,7 @@ gilt_pars = Dict(
     "verbosity" => 0,
     "rotate" => rotate
 )
+
 
 A_crit_approximation = trajectory(relT, number_of_initial_steps, gilt_pars)["A"][end];
 A_crit_approximation, Hc, Vc, SHc, SVc = fix_continuous_gauge(A_crit_approximation);
@@ -93,8 +95,8 @@ A_crit_approximation_JU = py_to_ju(A_crit_approximation);
 # section: RECURSION DEPTH FIXING AND NORMALISATION
 ################################################
 
-A1, _ = py"gilttnr_step"(A_crit_approximation, 0.0, gilt_pars);
 
+A1, _ = py"gilttnr_step"(A_crit_approximation, 0.0, gilt_pars);
 
 tmp = py"depth_dictionary"
 
@@ -104,9 +106,6 @@ recursion_depth = Dict(
     "E" => tmp[(1, "E")],
     "W" => tmp[(1, "W")]
 )
-
-
-
 
 gilt_pars = Dict(
     "gilt_eps" => gilt_eps,
