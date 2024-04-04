@@ -8,8 +8,8 @@ from tensors import Tensor, TensorZ2
 
 # Threshold for when the recursive iteration of Gilt is considered to
 # have converged.
-#convergence_eps = 1e-2 # for chi = 10, 20; 
-convergence_eps = 5e-3 # for chi =30
+convergence_eps = 1e-2 # for chi = 10, 20; 
+#convergence_eps = 5e-3 # for chi =30
 
 
 
