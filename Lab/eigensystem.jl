@@ -56,7 +56,7 @@ settings = ArgParseSettings()
 	"--verbosity"
 	help = "Verbosity of the eigensolver"
 	arg_type = Int64
-	default = 3
+	default = 0
 	"--Z2_odd_sector"
 	help = "If true the algorithm will find eigenvectors in Z2 breaking sector"
 	arg_type = Bool
@@ -64,11 +64,11 @@ settings = ArgParseSettings()
 	"--freeze_R"
 	help = "If true the algorithm will freeze R matrices."
 	arg_type = Bool
-	default = true
+	default = false
 	"--krylovdim"
 	help = "Dimension of the Krylov space used in the eigenvalue computation. This parameter should be larger than N."
 	arg_type = Int64
-	default = 25
+	default = 30
 	"--path_to_tensor"
 	help = "If provided, the code will ignore relT, Jratio, and N and will load the initial tensor from the given path. The file with the tensor should be created using Julia's serialize function. It should be a dictionary that contains the tensor A under key \"A\" and the recursion depths array under key \"recursion_depth\"."
 	arg_type = String
@@ -121,7 +121,6 @@ A_crit_approximation_JU = py_to_ju(A_crit_approximation);
 
 ZH = diagm(vcat(ones(chi ÷ 2), -ones(chi ÷ 2)))
 ZV = diagm(vcat(ones(chi ÷ 2), -ones(chi ÷ 2)))
-
 
 A_crit_approximation_Z2_broken, GH, GV, SH, SV = fix_continuous_gauge(A_crit_approximation_Z2_broken);
 A_crit_approximation_Z2_broken, accepted_elements_Z2_broken, _, _ = fix_discrete_gauge(A_crit_approximation_Z2_broken);
@@ -276,11 +275,18 @@ println("  gilt_eps=", gilt_eps, "  cg_eps=", cg_eps)
 gilt_eps = gilt_pars["gilt_eps"]
 cg_eps = gilt_pars["cg_eps"]
 
+for i in range(1, length(res[1]))
+	val = res[1][i]
+	println(val, " |  Z2 q.n.=", parity(res[2][i], ZH, ZV))
+end
+
+#=
 # print complex eigenvalue
 for i in range(1, length(res[1]))
 	val = res[1][i]
 	println(Jratio, " : ", val, " | evalonly evnum=", i, " Z2 q.n.=", parity(res[2][i], ZH, ZV), " chi=", chi, " gilt_eps=", gilt_eps, " cg_eps=", cg_eps)
 end
+
 
 # print real part of eigenvalue
 for i in range(1, length(res[1]))
@@ -299,3 +305,4 @@ for i in range(1, length(res[1]))
 	val = log(abs(res[1][i]))
 	println(Jratio, "  ", val, " | evallog evnum=", i, " Z2 q.n.=", parity(res[2][i], ZH, ZV), " chi=", chi, " gilt_eps=", gilt_eps, " cg_eps=", cg_eps)
 end
+=#

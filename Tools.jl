@@ -394,7 +394,7 @@ end
 
 function phase(A, gilt_pars; max_number_of_steps = 40, tol = 1e-4)
 	for i ∈ 1:max_number_of_steps
-		A, _ = py"gilttnr_step"(A, 1.0, gilt_pars)
+		A, _ = py"gilttnr_step"(A, 0.0, gilt_pars)
 		second_eigenvalue = (A|>py"get_A_spectrum"|>N_first_elements_zero_if_missing)[2]
 		if abs(second_eigenvalue - 1) < tol
 			return LOW_TEMPERATURE, i
@@ -424,16 +424,13 @@ function perform_search(initialA_pars_low, initialA_pars_high, gilt_pars; search
 	gap = relT_high - relT_low
 	len = 0
 	while gap > search_tol
-		if verbose
-			@info "Checking relT=$relT"
-		end
 		relT_low = initialA_pars_low["relT"]
 		relT_high = initialA_pars_high["relT"]
 		relT = (relT_low + relT_high) / 2
 		initialA_pars = Dict("relT" => relT, "Jratio" => Jratio)
 
 		if verbose
-			println("compute phase for ", initialA_pars)
+			@info "Compute phase for relT=$relT"
 		end
 
 		phase_res, len = phase(initial_tensor(initialA_pars), gilt_pars, max_number_of_steps = max_number_of_steps, tol = phase_tol)
@@ -452,7 +449,7 @@ function perform_search(initialA_pars_low, initialA_pars_high, gilt_pars; search
 		gap = initialA_pars_high["relT"] - initialA_pars_low["relT"]
 
 		if verbose
-			println(" gap=", gap)
+			@info "gap=$gap"
 		end
 
 	end

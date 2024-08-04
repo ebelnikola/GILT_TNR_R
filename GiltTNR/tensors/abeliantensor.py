@@ -19,7 +19,7 @@ def phase_factor(x):
 
 # uncommenting one of those functions we can choose the method used to fix the signs 
 
-method="sum"
+method="weighted"
 if method=="sum":
     def fix_signs_in_vector(v,tol=1e-9):
         #tol is not needed here but we left it here for consistency
