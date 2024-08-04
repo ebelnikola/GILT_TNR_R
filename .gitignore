@@ -1,0 +1,25 @@
+# Folders:
+.vscode/
+bin/
+export/
+plot_data/*
+tk_plot_data/*
+
+# Data
+*.pdf
+*.data
+**.csv
+**.txt
+*.mp4
+*.gif
+*.log
+
+
+# nohup output file
+nohup.out
+
+# temporary files 
+**copy.jl
+**_tmp.jl
+**_tmp.sh
+

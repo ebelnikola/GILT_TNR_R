@@ -1,0 +1,12 @@
+Data for eigenvalues as function of Jratio:
+  eigenvalues_sum.dat
+  eigenvalues_weighted_sum.dat
+First file used sum of vector components to fix signs
+Second file used sum of vector components time 1/(1+i) to fix signs
+Data can be read by program 
+  deserialize_spectrum_jratio.jl
+
+Data for diagonal spectrum of approximate fixed point (number of RG steps=20)
+  diagonal_spectra_fixed_point.dat
+Data can be read by program 
+  deserialize_diagonal_spectra_fixed_point.jl

@@ -1,0 +1,10 @@
+total_iters: 23
+symmetry_tensors: True
+print_scaldims: 50
+print_spectra: True
+print_freeenergy: True
+gilt_eps: !!float 5e-8
+cg_chis: !!python/object/apply:builtins.range [0, 111, 1]
+cg_eps: !!float 1e-10
+verbosity: 100
+log_dir: logs/spectra_gilt
