@@ -13,11 +13,3 @@ Pkg.add(name = "DataFrames", version = "1.6.1")
 Pkg.add(name = "Colors", version = "0.12.11")
 Pkg.add(name = "LaTeXStrings", version = "1.3.1")
 
-
-mkpath("critical_temperatures")
-mkpath("diff_tests")
-mkpath("eigensystems")
-mkpath("newton")
-mkpath("trajectories")
-mkpath("trajectory_plots")
-mkpath("DSO");

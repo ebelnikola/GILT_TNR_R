@@ -11,6 +11,16 @@
 # - PLOTTING SHORTHANDS: yloglines, xloglines, xyloglines
 # - EXACT ISING SPECTRUM: exact_spectrum, exact_spectrum_even
 
+
+mkpath("critical_temperatures")
+mkpath("diff_tests")
+mkpath("eigensystems")
+mkpath("newton")
+mkpath("trajectories")
+mkpath("trajectory_plots")
+mkpath("DSO");
+
+
 ########################################################
 # topic: GENERIC PACKAGES
 ########################################################
