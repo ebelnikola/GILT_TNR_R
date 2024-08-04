@@ -60,8 +60,6 @@ settings = ArgParseSettings()
 	default = 0
 end
 
-println("Number of threads to be used: $(Threads.nthreads())")
-
 const global rotate = true
 
 pars = parse_args(settings; as_symbols = true)
@@ -246,17 +244,6 @@ jac_approximation = Graham_Schmidt_matrix^(-1) * jac_approximation_non_orthogona
 
 ImJ_inv_matrix = (I - jac_approximation)^(-1);
 
-#=
-function factor(δA) # required in Newton stupid version 
-	res = deepcopy(δA)
-	for i ∈ 1:approximation_rank
-		for j ∈ 1:approximation_rank
-			res -= jac_approximation[i, j] * orthonormal_basis[i] * dot(orthonormal_basis[j], δA)
-		end
-	end
-	return res
-end
-=#
 
 function project_to_Vs(δA)
 	res = zero(δA)
@@ -278,14 +265,6 @@ function ImJ_inv(δA)
 	return ImJ_inv_δA_in_Vs + δA_out_of_Vs
 end
 
-#=
-function newton_function_stupid(A)
-	x_minus_f = A - gilt(A, accepted_elements, gilt_pars)
-	initial_vector = py_to_ju(random_Z2tens(A_crit_approximation))
-	correction = linsolve(factor, x_minus_f, initial_vector)[1]
-	return A - correction
-end
-=#
 
 function newton_function(A)
 	x_minus_f = A - gilt(A, accepted_elements, gilt_pars)
