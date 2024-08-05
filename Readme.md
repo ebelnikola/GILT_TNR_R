@@ -22,7 +22,7 @@ cd GILT_TNR_R
 ```
 5. Run the script that will install all necessary Julia packages:
 ```
-julia --project install_packages.jl
+julia install_packages.jl
 ```
 6. To run our interactive notebooks, you may want to install [jupyter notebook](https://jupyter.org/) or the corresponding [extension for vscode](https://marketplace.visualstudio.com/items?itemName=ms-toolsai.jupyter).     
 
@@ -31,7 +31,7 @@ julia --project install_packages.jl
 
 We provide Jupyter notebooks that allow one to reproduce some of our results in an easy way. To run a notebook open it either in vscode (provided that the suitable extension is installed) or using the following command in the terminal:
 ```
-```jupyter notebook name_of_the_notebook```
+jupyter notebook name_of_the_notebook
 ``` 
 
 Notebooks:
