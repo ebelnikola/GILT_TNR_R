@@ -2,7 +2,7 @@
 
 REMINDER TO ADD LINKS TO THE PAPERS
 
-This repository contains the Python3 and Julia codes of the numerical computations in the following papers:
+This repository contains the Python3 and Julia codes for the numerical computations in the following papers:
 - [Rotations, Negative Eigenvalues, and Newton Method in Tensor Network Renormalization Group]() 
 - [DSO]()
 
@@ -10,14 +10,13 @@ Apart from computational packages for Python3 and Julia, our code relies heavily
 
 All the source code is licensed under the MIT license, as described in the file LICENSE.
 
-
 ## Installation
 
 1. Install Python3 with NumPy and SciPy packages. An easy way to do this is to use [anaconda](https://www.anaconda.com/download/). 
 2. Install [Julia](https://julialang.org/). 
 3. Clone this repository by running:
-```
-git clone https://github.com/ebelnikola/GILT_TNR_R
+``` 
+git clone https://github.com/ebelnikola/GILT_TNR_R 
 ```
 4. Move to the repository:
 ```
@@ -29,13 +28,12 @@ julia install_packages.jl
 ```
 6. To run our interactive notebooks, you may want to install [jupyter notebook](https://jupyter.org/) or the corresponding [extension for VS Code](https://marketplace.visualstudio.com/items?itemName=ms-toolsai.jupyter).     
 
-
 ## Notebooks
 
-Once the installation is done, we invite the user to try our Jupyter notebooks, which allow one to reproduce some of our results easily. To run a notebook open it either in VS Code (provided that the suitable extension is installed) or using the following command in the terminal (from the root of the repository):
+Once the installation is done, we invite the user to try our Jupyter notebooks, which allow one to reproduce some of our results easily. To run a notebook, open it either in VS Code (provided that the suitable extension is installed) or using the following command in the terminal (from the root of the repository):
 ```
 jupyter notebook name_of_the_notebook
-``` 
+```
 
 Notebooks:
 
@@ -45,33 +43,29 @@ Notebooks:
 
 We provide the following scripts in the Lab directory:
 
-- `plot_trajectory.jl` applies the `GiltTNR` algorithm `traj_len` times to the initial tensor corresponding to 2d nearest neighbors Ising model at the relative temperature `relT` and anisotropy parameter `Jratio` ($a$ in [the Newton method paper]()). It saves the resulting trajectories to the "trajectories" folder in two files: `*.data` with tensors, log factors, and errors along the trajectory; `*.log` with all the text output of the algorithm. Saves the plots of the trajectories of the tensor's singular values (obtained by "diagonal" SVD: $A_{ijkl}=U_{ij l} S_l V_{l kl}$).
+- `plot_trajectory.jl` applies the GiltTNR algorithm `traj_len` times to the initial tensor corresponding to 2d nearest neighbors Ising model at the relative temperature `relT` and anisotropy parameter `Jratio` ($a$ in [the Newton method paper]()). It saves the resulting trajectories to the trajectories folder in two files: `*.data` with tensors, log factors, and errors along the trajectory; `*.log` with all the text output of the algorithm. Saves the plots of the trajectories of the tensor's singular values (obtained by "diagonal" SVD: $A_{ijkl}=U_{ij l} S_l V_{l kl}$).
 
-- `critical_temperature.jl` finds the critical temperature using bisection search; saves the result into the "critical_temperatures" directory; plots the corresponding trajectories of the singular values. Saves the plot into the "trajectory_plots" directory. 
+- `critical_temperature.jl` finds the critical temperature using bisection search; saves the result into the "critical_temperatures" directory; plots the corresponding trajectories of the singular values. Saves the plot into the trajectory_plots directory. 
  
-- `differentiability_test.jl` performs differentiability tests of the GiltTNR algorithm using a random direction vector. 
+- `differentiability_test.jl` performs differentiability tests of the GiltTNR algorithm using a random direction vector. Saves the corresponding plot to the diff_tests folder.
 
-- `eigensystem.jl` gets the largest eigenvalues and the corresponding eigenvectors of GiltTNR linearised around some initial approximation of the critical tensor (given by `relT`, `Jratio`, and `number_of_initial_steps`). Saves the resulting tensor and the eigensystem to "eigensystems" folder. Note that the script will fix `bond_repetitions` and `recursion_depth`. These parameters will be saved together with the other output.  
+- `eigensystem.jl` gets the largest eigenvalues and the corresponding eigenvectors of GiltTNR linearised around some initial approximation of the critical tensor (given by `relT`, `Jratio`, and `number_of_initial_steps`). Saves the resulting tensor and the eigensystem to the eigensystems folder. Note that the script will fix `bond_repetitions` and `recursion_depth`. These parameters will be saved together with the other output.  
 
-- `newton.jl` (assumes that `rotation=true`) repeats the computation from `eigensystem.jl`. Then, it finds the critical tensor using Newton's method. Saves the data to the "newton" directory. Note that the found critical tensor is the fixed point for gilt with fixed `bond_repetitions` and `recursion_depth`. These parameters will be saved together with the other data.
+- `newton.jl` (assumes that `rotation=true`) repeats the computation from `eigensystem.jl`. Then, it finds the critical tensor using Newton's method. Saves the data to the newton directory. Note that the found critical tensor is the fixed point for GiltTNR with fixed `bond_repetitions` and `recursion_depth`. These parameters will be saved together with the other data.
 
-Note that each script has the corresponding help describing all the command line arguments. To see this help run
+Note that each script has the corresponding help describing all the command line arguments. To see this help run:
 ```
-julia Lab/script_name.jl --help
+julia --project Lab/script_name.jl --help
 ```
-
 ### Naming convention
 
-The database handling in this repository is not perfect. We acknowledge it could be improved, but we are following the saying "if it ain't broke, don't fix it". Important data generated by the code will use the following naming convention:
-``` 
-rotate=[rotate][chi][gilt_eps]_[cg_eps]__[info about particular experiment].[extension] 
+The database handling in this repository is not perfect. We acknowledge it could be improved, but we are following the saying "If it ain't broke, don't fix it". Important data generated by the code will use the following naming convention:
 ```
-
+rotate=[rotate][chi][gilt_eps]_[cg_eps]__[info about particular experiment].[extension]
+```
 The first part of the name `rotate=[rotate]_[chi]_[gilt_eps]_[cg_eps]` uniquely characterizes the GiltTNR algorithm, with one caveat. This naming convention assumes that `bond_repetitions`, `recursion_depth`, and `Rmatrices` were not provided (see the list of adjustments in the GiltTNR directory section). Two functions generate database entries using this convention: `trajectory` and `plot_the_trajectory` (specifically, their methods with the `initialA_pars` argument). **To avoid ambiguities in the database, users should not pass `bond_repetitions`, `recursion_depth`, or `Rmatrices` to these functions.**
 
-
 ## Other files
-
 
 ### GiltTNR directory
 This directory contains Python code implementing the GiltTNR algorithm (see [this paper](https://journals.aps.org/prb/abstract/10.1103/PhysRevB.97.045111)). It combines code from [GiltTNR](https://github.com/GiltTNR/GiltTNR), [ncon](https://github.com/mhauru/ncon), and [abeliantensors](https://github.com/mhauru/abeliantensors). We made the following adjustments to the codes there:
@@ -90,10 +84,10 @@ This directory contains Python code implementing the GiltTNR algorithm (see [thi
 
 - `EchelonForm.jl` - technical code used in `GaugeFixing.jl` for checking ranks of boolean matrices. 
 - `GaugeFixing.jl` - continuous and discrete gauge fixing routines.
-- `install_packages.jl` - script that installs all the necessary dependencies and creates the necessary directories.
+- `install_packages.jl` - script that installs all the necessary dependencies.
 - `KrylovTechnical.jl` - technical code that provides a minimal implementation of Z2 invariant tensors in Julia. This solves the problem of `KrylovKit` throwing a segmentation fault while working with PyObjects.
 - `NumDifferentiation.jl` - provides the function that performs numerical differentiation.
-- `Tools.jl` - Contains user-dedicated functions. These are listed at the top of the file.     
+- `Tools.jl` - Contains some useful functions. These are listed at the top of the file.     
 - `IsingExactLevels` and `IsingEvenExactLevels` - data about exact 2d Ising spectrum.
 - `Project.toml` and `Manifest.toml` - contain information about versions of packages used in the computations.
 - `Newton_method_paper_results_reproduction.ipynb` - provides the simplest way to reproduce some of the results from "Rotations, Negative Eigenvalues, and Newton Method in Tensor Network Renormalization Group".
