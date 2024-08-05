@@ -10,14 +10,33 @@ All the source code is licensed under the MIT license, as described in the file 
 
 ## Installation
 
-First of all, install Python3 with NumPy and SciPy packages. Then, install Julia. Finally, run 
+1. Install Python3 with NumPy and SciPy packages. An easy way to do this is to use [anaconda](https://www.anaconda.com/download/). 
+2. Install [Julia](https://julialang.org/). 
+3. Clone this repository by running:
+```
+git clone https://github.com/ebelnikola/GILT_TNR_R
+```
+4. Move to the repository:
+```
+cd GILT_TNR_R
+```
+5. Run the script that will install all necessary Julia packages:
 ```
 julia --project install_packages.jl
 ```
-The script will install all the necessary julia packages.
-# Computations example
+6. To run our interactive notebooks, you may want to install [jupyter notebook](https://jupyter.org/) or the corresponding [extension for vscode](https://marketplace.visualstudio.com/items?itemName=ms-toolsai.jupyter).     
 
-The notebook "Newton_method_paper_results_reproduction.ipynb" provides the easiest way to reproduce some of the results reported in the paper "Rotations, Negative Eigenvalues, and Newton Method in Tensor Network Renormalization Group".
+
+## Notebooks
+
+We provide Jupyter notebooks that allow one to reproduce some of our results in an easy way. To run a notebook open it either in vscode (provided that the suitable extension is installed) or using the following command in the terminal:
+```
+```jupyter notebook name_of_the_notebook```
+``` 
+
+Notebooks:
+
+-`Newton_method_paper_results_reproduction.ipynb` - reproduces some of the results from [Rotations, Negative Eigenvalues, and Newton Method in Tensor Network Renormalization Group](). 
 
 # Naming convention
 
