@@ -1,3 +1,20 @@
+# GILT-TNR with rotations
+
+REMINDER TO ADD LINKS TO THE PAPERS
+
+This repository contains the Python3 and Julia codes of the numerical computations in the following papers:
+- [Rotations, Negative Eigenvalues, and Newton Method in Tensor Network Renormalization Group]() 
+- [DSO]()
+
+All the source code is licensed under the MIT license, as described in the file LICENSE.
+
+## Installation
+
+First of all, install Python3 with NumPy and SciPy packages. Then, install Julia. Finally, run 
+```
+julia --project install_packages.jl
+```
+The script will install all the necessary julia packages.
 # Computations example
 
 The notebook "Newton_method_paper_results_reproduction.ipynb" provides the easiest way to reproduce some of the results reported in the paper "Rotations, Negative Eigenvalues, and Newton Method in Tensor Network Renormalization Group".
@@ -9,11 +26,10 @@ The database handling in this repository is not perfect. We acknowledge it could
 rotate=[rotate][chi][gilt_eps]_[cg_eps]__[info about particular experiment].[extension] 
 ```
 
-The first part of the name `rotate=[rotate]_[chi]_[gilt_eps]_[cg_eps]` uniquely characterizes the GiltTNR algorithm, with one caveat. This naming convention assumes that `bond_repetitions`, `recursion_depth`, and `Rmatrices` were not provided (see the list of adjustments in the GiltTNR directory section). Two functions generate database entries using this convention: `trajectory` and `plot_the_trajectory` (specifically, their methods with the `initialA_pars` argument). <span style="color: red;">To avoid ambiguities in the database, users should not pass `bond_repetitions`, `recursion_depth`, or `Rmatrices` to these functions.</span>
+The first part of the name `rotate=[rotate]_[chi]_[gilt_eps]_[cg_eps]` uniquely characterizes the GiltTNR algorithm, with one caveat. This naming convention assumes that `bond_repetitions`, `recursion_depth`, and `Rmatrices` were not provided (see the list of adjustments in the GiltTNR directory section). Two functions generate database entries using this convention: `trajectory` and `plot_the_trajectory` (specifically, their methods with the `initialA_pars` argument). To avoid ambiguities in the database, users should not pass `bond_repetitions`, `recursion_depth`, or `Rmatrices` to these functions.
 
 # Files and directories description
 
-<span style="color: red;">REMINDER TO ADD LINK TO THE PAPER</span>
 
 ## GiltTNR directory
 This directory contains Python code implementing the GiltTNR algorithm (see [this paper](https://journals.aps.org/prb/abstract/10.1103/PhysRevB.97.045111)). It combines code from [GiltTNR](https://github.com/GiltTNR/GiltTNR), [ncon](https://github.com/mhauru/ncon), and [abeliantensors](https://github.com/mhauru/abeliantensors). We made the following adjustments:
