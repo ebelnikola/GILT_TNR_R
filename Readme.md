@@ -10,6 +10,12 @@ Apart from computational packages for Python3 and Julia, our code relies heavily
 
 All the source code is licensed under the MIT license, as described in the file LICENSE.
 
+## TODO:
+
+- warning about AbstractAlgebra.mul!
+- warnings in initial_tensor function
+- on my laptop, sometimes, svd in trg step does not converge. That can be fixed by normalizing a tensor before doing svd. 
+
 ## Installation
 
 1. Install Python3 with NumPy and SciPy packages. An easy way to do this is to use [anaconda](https://www.anaconda.com/download/). 
