@@ -10,12 +10,6 @@ Apart from computational packages for Python3 and Julia, our code relies heavily
 
 All the source code is licensed under the MIT license, as described in the file LICENSE.
 
-## TODO:
-
-- warning about AbstractAlgebra.mul!
-- warnings in initial_tensor function
-- on my laptop, sometimes, svd in trg step does not converge. That can be fixed by normalizing a tensor before doing svd. 
-
 ## Installation
 
 1. Install Python3 with NumPy and SciPy packages. An easy way to do this is to use [anaconda](https://www.anaconda.com/download/). 
@@ -97,3 +91,10 @@ This directory contains Python code implementing the GiltTNR algorithm (see [thi
 - `IsingExactLevels` and `IsingEvenExactLevels` - data about exact 2d Ising spectrum.
 - `Project.toml` and `Manifest.toml` - contain information about versions of packages used in the computations.
 - `Newton_method_paper_results_reproduction.ipynb` - provides the simplest way to reproduce some of the results from "Rotations, Negative Eigenvalues, and Newton Method in Tensor Network Renormalization Group".
+
+
+## TODO:
+
+- Resolve warning about AbstractAlgebra.mul!
+- Resolve warnings in initial_tensor function
+- On some computers, sometimes, SVD in TRG step does not converge. That can be fixed by normalizing a tensor before doing SVD. 
