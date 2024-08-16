@@ -26,7 +26,7 @@ cd GILT_TNR_R
 ```
 julia install_packages.jl
 ```
-If there are any problems at this step, try using the second version of the installer script as follows:
+If there are any problems at this step, try using the second version of the install script as follows:
 ```
 julia install_packages_v2.jl
 ``` 
