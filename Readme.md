@@ -26,7 +26,12 @@ cd GILT_TNR_R
 ```
 julia install_packages.jl
 ```
-6. To run our interactive notebooks, you may want to install [jupyter notebook](https://jupyter.org/) or the corresponding [extension for VS Code](https://marketplace.visualstudio.com/items?itemName=ms-toolsai.jupyter).     
+If there are any problems at this step, try using the second version of the installer script as follows:
+```
+julia install_packages_v2.jl
+``` 
+
+1. To run our interactive notebooks, you may want to install [jupyter notebook](https://jupyter.org/) or the corresponding [extension for VS Code](https://marketplace.visualstudio.com/items?itemName=ms-toolsai.jupyter).     
 
 ## Notebooks
 
