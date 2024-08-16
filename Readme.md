@@ -1,7 +1,4 @@
 # GILT-TNR with rotations
-
-REMINDER TO ADD LINKS TO THE PAPERS
-
 This repository contains the Python3 and Julia codes for the numerical computations in the following papers:
 - [Rotations, Negative Eigenvalues, and Newton Method in Tensor Network Renormalization Group]() 
 - [DSO]()
@@ -101,6 +98,7 @@ This directory contains Python code implementing the GiltTNR algorithm (see [thi
 
 ## TODO:
 
+- Add links to the papers
 - Resolve warning about AbstractAlgebra.mul!
 - Resolve warnings in initial_tensor function
 - On some computers, sometimes, SVD in TRG step does not converge. That can be fixed by normalizing a tensor before doing SVD. 
