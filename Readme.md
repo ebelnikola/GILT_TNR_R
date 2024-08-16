@@ -30,6 +30,7 @@ If there are any problems at this step, try using the second version of the inst
 ```
 julia install_packages_v2.jl
 ``` 
+The list of all required packages is provided in the `Manifest.toml` file. Note that `Manifest.toml` contains an exhaustive list of all dependencies (including the dependencies of dependencies). The packages used in the code explicitly are listed in `install_packages_v2.jl`.   
 
 1. To run our interactive notebooks, you may want to install [jupyter notebook](https://jupyter.org/) or the corresponding [extension for VS Code](https://marketplace.visualstudio.com/items?itemName=ms-toolsai.jupyter).     
 

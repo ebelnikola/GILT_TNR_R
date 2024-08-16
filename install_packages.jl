@@ -1,4 +1,4 @@
 using Pkg
-Pkg.add("IJulia")
+Pkg.add("IJulia") # adds IJulia globaly
 Pkg.activate(".")
 Pkg.instantiate()
