@@ -1,7 +1,7 @@
 # The process may take some time
 
 using Pkg
-Pkg.add("IJulia") # adds IJulia globaly
+Pkg.add("IJulia") # adds IJulia globally
 Pkg.activate(".")
 Pkg.add("IJulia") # adds IJulia to this project 
 Pkg.add("LinearAlgebra")
