@@ -1,7 +1,7 @@
 # GILT-TNR with rotations
 This repository contains the Python3 and Julia codes for the numerical computations in the following papers:
-- [Rotations, Negative Eigenvalues, and Newton Method in Tensor Network Renormalization Group]() 
-- [DSO]()
+- [Rotations, Negative Eigenvalues, and Newton Method in Tensor Network Renormalization Group](https://arxiv.org/abs/2408.10312) 
+- [LDO]()
 
 Apart from computational packages for Python3 and Julia, our code relies heavily on the following libraries: [GiltTNR](https://github.com/GiltTNR/GiltTNR), [ncon](https://github.com/mhauru/ncon), and [abeliantensors](https://github.com/mhauru/abeliantensors).
 
@@ -40,13 +40,13 @@ jupyter notebook name_of_the_notebook
 
 Notebooks:
 
-`Newton_method_paper_results_reproduction.ipynb` - reproduces some of the results from [Rotations, Negative Eigenvalues, and Newton Method in Tensor Network Renormalization Group](). 
+`Newton_method_paper_results_reproduction.ipynb` - reproduces some of the results from [Rotations, Negative Eigenvalues, and Newton Method in Tensor Network Renormalization Group](https://arxiv.org/abs/2408.10312). 
 
 ## Scripts 
 
 We provide the following scripts in the Lab directory:
 
-- `plot_trajectory.jl` applies the GiltTNR algorithm `traj_len` times to the initial tensor corresponding to 2d nearest neighbors Ising model at the relative temperature `relT` and anisotropy parameter `Jratio` ($a$ in [the Newton method paper]()). It saves the resulting trajectories to the trajectories folder in two files: `*.data` with tensors, log factors, and errors along the trajectory; `*.log` with all the text output of the algorithm. Saves the plots of the trajectories of the tensor's singular values (obtained by "diagonal" SVD: $A_{ijkl}=U_{ij l} S_l V_{l kl}$).
+- `plot_trajectory.jl` applies the GiltTNR algorithm `traj_len` times to the initial tensor corresponding to 2d nearest neighbors Ising model at the relative temperature `relT` and anisotropy parameter `Jratio` ($a$ in [the Newton method paper](https://arxiv.org/abs/2408.10312)). It saves the resulting trajectories to the trajectories folder in two files: `*.data` with tensors, log factors, and errors along the trajectory; `*.log` with all the text output of the algorithm. Saves the plots of the trajectories of the tensor's singular values (obtained by "diagonal" SVD: $A_{ijkl}=U_{ij l} S_l V_{l kl}$).
 
 - `critical_temperature.jl` finds the critical temperature using bisection search; saves the result into the "critical_temperatures" directory; plots the corresponding trajectories of the singular values. Saves the plot into the trajectory_plots directory. 
  
@@ -75,7 +75,7 @@ This directory contains Python code implementing the GiltTNR algorithm (see [thi
 
 1. Added an option to fix the number of Gilt algorithm iterations applied to each bond around a plaquette, controlled by the `bond_repetitions` keyword argument.
 
-2. Added an option to fix the recursion depth in the optimization procedure for `R` matrices (`Q` matrices in the [Newton method paper]()). This is controlled by the `recursion_depth` argument (used with `bond_repetitions`), which is a dictionary with keys from `{"S", "N", "E", "W"}` and values specifying recursion depths for corresponding legs. 
+2. Added an option to fix the recursion depth in the optimization procedure for `R` matrices (`Q` matrices in the [Newton method paper](https://arxiv.org/abs/2408.10312)). This is controlled by the `recursion_depth` argument (used with `bond_repetitions`), which is a dictionary with keys from `{"S", "N", "E", "W"}` and values specifying recursion depths for corresponding legs. 
 
 3. Added an option to use precomputed `R` matrices instead of running the optimization procedure. To use this, pass `bond_repetitions` and the `Rmatrices`, a dictionary with keys `(bond_key, lap)` (`lap` is an integer, `bond_key in {"S", "N", "E", "W"}`) and values as `R` matrices to be applied at the specified bond and Gilt iteration.
 
@@ -98,7 +98,8 @@ This directory contains Python code implementing the GiltTNR algorithm (see [thi
 
 ## TODO:
 
-- Add links to the papers
+- Add links to the LDO paper
 - Resolve warning about AbstractAlgebra.mul!
 - Resolve warnings in initial_tensor function
 - On some computers, sometimes, SVD in TRG step does not converge. That can be fixed by normalizing a tensor before doing SVD. 
+- Replace DSO with LDO everywhere

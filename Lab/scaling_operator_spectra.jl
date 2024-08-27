@@ -146,9 +146,9 @@ py"""
 
 def NSWE(Rs,direc,pars):
 	spliteps = pars["gilt_eps"]*1e-3
-        # TK change:
-        # replaced the match statement by the 4 if statements below.
-        # the match statement causes an error for TK, not for NE. WTF.
+		# TK change:
+		# replaced the match statement by the 4 if statements below.
+		# the match statement causes an error for TK, not for NE. WTF.
 	if direc=="N":
 		NRs=[]
 		NLs=[]
@@ -181,7 +181,7 @@ def NSWE(Rs,direc,pars):
 			ETs.append(ET)
 			EBs.append(EB)
 		return ncon([EBs[0],EBs[1]],[[-1,2],[2,-2]]), ncon([ETs[1],ETs[0]],[[-1,2],[2,-2]])
-        # end TK change:
+		# end TK change:
 """
 
 Ns = [Rmatrices[("N", 1)], Rmatrices[("N", 2)]];
@@ -405,7 +405,7 @@ else
 	)
 end
 
-filename = "DSO/" * gilt_pars_identifier(gilt_pars) * "_rotate=($rotate)_"
+filename = "DSO/" * gilt_pars_identifier(gilt_pars) * "_rotate=($rotate)"
 
 if path_to_tensor != "none"
 	filename *= ("_path=" * path_to_tensor)
@@ -414,6 +414,8 @@ else
 		filename = filename * "_Jratio=$(Jratio)"
 	end
 end
+
+filename *= ".data"
 
 serialize(filename, result)
 
