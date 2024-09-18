@@ -58,6 +58,8 @@ We provide the following scripts in the Lab directory:
 
 - `newton.jl` (assumes that `rotation=true`) repeats the computation from `eigensystem.jl`. Then, it finds the critical tensor using Newton's method. Saves the data to the newton directory. Note that the found critical tensor is the fixed point for GiltTNR with fixed `bond_repetitions` and `recursion_depth`. These parameters will be saved together with the other data.
 
+- `LDO_spectra.jl` computes the spectrum of the GILT-TNR operator. Saves the result in LDO folder.
+
 Note that each script has the corresponding help describing all the command line arguments. To see this help run:
 ```
 julia --project Lab/script_name.jl --help
@@ -95,7 +97,9 @@ This directory contains Python code implementing the GiltTNR algorithm (see [thi
 - `Tools.jl` - Contains some useful functions. These are listed at the top of the file.     
 - `IsingExactLevels` and `IsingEvenExactLevels` - data about exact 2d Ising spectrum.
 - `Project.toml` and `Manifest.toml` - contain information about versions of packages used in the computations.
-- `Newton_method_paper_results_reproduction.ipynb` - provides the simplest way to reproduce some of the results from "Rotations, Negative Eigenvalues, and Newton Method in Tensor Network Renormalization Group".
+- `Newton_method_paper_results_reproduction.ipynb` - provides the simplest way to reproduce some of the results from [Rotations, Negative Eigenvalues, and Newton Method in Tensor Network Renormalization Group](https://arxiv.org/abs/2408.10312).
+- `Lattice_Dilatation_Operator_paper_results_reproduction.ipynb` - provides the simplest way to reproduce some of the results from [Transfer Matrix and Lattice Dilatation Operator for High-Quality Fixed Points in Tensor Network Renormalization Group]().
+
 
 
 ## TODO:
