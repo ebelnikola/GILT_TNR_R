@@ -18,7 +18,7 @@ mkpath("eigensystems")
 mkpath("newton")
 mkpath("trajectories")
 mkpath("trajectory_plots")
-mkpath("DSO");
+mkpath("LDO");
 
 
 ########################################################

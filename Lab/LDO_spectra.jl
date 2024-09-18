@@ -7,7 +7,7 @@
 # - DEFINING t1_1,t1_2,t2_1,t2_2
 # - DEFINING R,D,L,U
 # - DEFINING hL, hR, vB and vT - INDEX COMPRESSION MATRICES
-# - DEFINING THE SCALING OPERATOR
+# - DEFINING THE LDO
 # - COMPUTING THE EIGENVALUES
 
 ################################################
@@ -254,7 +254,7 @@ con_order = [4, 6, 5, 3, 1, 2];
 T1 = ncon(tensors, connects, order = con_order);
 py"""
 Stmp1, hR=($T1).eig([0,1],[2,3],chis=$(chi_compression),hermitian=True)
-print(Stmp1.to_ndarray()[-1])
+#print(Stmp1.to_ndarray()[-1])
 """
 hR = py"hR";
 
@@ -263,7 +263,7 @@ con_order = [3, 5, 4, 6, 1, 2];
 T1 = ncon(tensors, connects, order = con_order);
 py"""
 Stmp2, hL=($T1).eig([0,1],[2,3],chis=$(chi_compression),hermitian=True)
-print(Stmp2.to_ndarray()[-1])
+#print(Stmp2.to_ndarray()[-1])
 """
 hL = py"hL";
 
@@ -272,7 +272,7 @@ con_order = [4, 6, 5, 3, 1, 2];
 T2 = ncon(tensors, connects, order = con_order);
 py"""
 Stmp3, vT=($T2).eig([0,1],[2,3],chis=$(chi_compression),hermitian=True)
-print(Stmp3.to_ndarray()[-1])
+#print(Stmp3.to_ndarray()[-1])
 """
 vT = py"vT";
 
@@ -281,12 +281,12 @@ con_order = [6, 4, 5, 3, 1, 2];
 T2 = ncon(tensors, connects, order = con_order);
 py"""
 Stmp4, vB=($T2).eig([0,1],[2,3],chis=$(chi_compression),hermitian=True)
-print(Stmp4.to_ndarray()[-1])
+#print(Stmp4.to_ndarray()[-1])
 """
 vB = py"vB";
 
 #################################################################
-# section: DEFINING THE SCALING OPERATOR
+# section: DEFINING THE LDO
 #################################################################
 
 const global NRa = NR.to_ndarray();
@@ -337,38 +337,30 @@ tttt = nothing;
 using TensorOperations
 
 if rotate == false
-	function scaling_operator(O)
-		println("Contracting...")
-		@time begin
-			@tensor order = (9, 7, 1, 6, 2, 33, 12, 4, 8, 30, 28, 29, 42, 40, 36, 37, 25, 21, 39, 3, 11, 5, 43,
-				15, 24, 27, 32, 10, 13, 22, 44, 35, 19, 16, 26, 14, 18, 31, 20, 41, 34, 17, 38, 23) begin
-				res[-1, -2, -3, -4] :=
-					NRa[32, 12] * SRa[10, 33] * SLa[36, 7] * NLa[9, 37] * EBa[39, 1] * WBa[2, 40] * ETa[4, 42] * WTa[43, 6] *
-					t1_1a[9, 8, 21] * t1_1a[5, 6, 19] * t1_2a[13, 10, 11] * t1_2a[15, 3, 1] * t2_2a[24, 3, 2] * t2_2a[22, 7, 8] *
-					t2_1a[12, 11, 16] * t2_1a[5, 4, 18] * Da[27, 15, 14] * Da[28, 23, 24] * Ua[17, 18, 30] * Ua[19, 20, 31] *
-					Ra[13, 14, 26] * Ra[17, 16, 25] * La[29, 23, 22] * La[44, 21, 20] * O[34, 38, 35, 41] * hRa[32, 33, 34] *
-					hLa[37, 36, 35] * vTa[39, 40, 38] * vBa[42, 43, 41] * hRa[25, 26, -1] * hLa[44, 29, -3] * vTa[27, 28, -2] *
-					vBa[30, 31, -4]
-			end
+	function LDO(O)
+		@tensor order = (9, 7, 1, 6, 2, 33, 12, 4, 8, 30, 28, 29, 42, 40, 36, 37, 25, 21, 39, 3, 11, 5, 43,
+			15, 24, 27, 32, 10, 13, 22, 44, 35, 19, 16, 26, 14, 18, 31, 20, 41, 34, 17, 38, 23) begin
+			res[-1, -2, -3, -4] :=
+				NRa[32, 12] * SRa[10, 33] * SLa[36, 7] * NLa[9, 37] * EBa[39, 1] * WBa[2, 40] * ETa[4, 42] * WTa[43, 6] *
+				t1_1a[9, 8, 21] * t1_1a[5, 6, 19] * t1_2a[13, 10, 11] * t1_2a[15, 3, 1] * t2_2a[24, 3, 2] * t2_2a[22, 7, 8] *
+				t2_1a[12, 11, 16] * t2_1a[5, 4, 18] * Da[27, 15, 14] * Da[28, 23, 24] * Ua[17, 18, 30] * Ua[19, 20, 31] *
+				Ra[13, 14, 26] * Ra[17, 16, 25] * La[29, 23, 22] * La[44, 21, 20] * O[34, 38, 35, 41] * hRa[32, 33, 34] *
+				hLa[37, 36, 35] * vTa[39, 40, 38] * vBa[42, 43, 41] * hRa[25, 26, -1] * hLa[44, 29, -3] * vTa[27, 28, -2] *
+				vBa[30, 31, -4]
 		end
-		println("Contracting is over")
 		return res
 	end
 else
-	function scaling_operator(O)
-		println("Contracting...")
-		@time begin
-			@tensor order = (36, 1, 25, 9, 33, 26, 4, 7, 40, 38, 44, 41, 30, 18, 6, 11, 2, 32, 3, 15, 29, 8, 22,
-				12, 10, 24, 37, 21, 43, 16, 13, 39, 14, 28, 35, 5, 42, 19, 20, 34, 27, 17, 31, 23) begin
-				res[-1, -2, -3, -4] :=
-					NRa[25, 12] * SRa[10, 26] * SLa[29, 7] * NLa[9, 30] * EBa[32, 1] * WBa[2, 33] * ETa[4, 35] * WTa[36, 6] * t1_1a[9, 8, 21] * t1_1a[5, 6, 19] * t1_2a[13, 10, 11] * t1_2a[15, 3, 1] * t2_2a[24, 3, 2] * t2_2a[22, 7, 8] * t2_1a[12, 11, 16] *
-					t2_1a[5, 4, 18] * Da[37, 15, 14] * Da[38, 23, 24] * Ua[17, 18, 42] * Ua[19, 20, 41] * Ra[13, 14, 40] * Ra[17, 16, 39] * La[43, 23, 22] * La[44, 21, 20] * O[27, 31, 28, 34] * hLa[25, 26, 27] * hRa[30, 29, 28] * vTa[32, 33, 31] *
-					vBa[35, 36, 34] *
-					hLa[37, 38, -1] * hRa[42, 41, -3] * vTa[43, 44, -2] * vBa[40, 39, -4]
+	function LDO(O)
+		@tensor order = (36, 1, 25, 9, 33, 26, 4, 7, 40, 38, 44, 41, 30, 18, 6, 11, 2, 32, 3, 15, 29, 8, 22,
+			12, 10, 24, 37, 21, 43, 16, 13, 39, 14, 28, 35, 5, 42, 19, 20, 34, 27, 17, 31, 23) begin
+			res[-1, -2, -3, -4] :=
+				NRa[25, 12] * SRa[10, 26] * SLa[29, 7] * NLa[9, 30] * EBa[32, 1] * WBa[2, 33] * ETa[4, 35] * WTa[36, 6] * t1_1a[9, 8, 21] * t1_1a[5, 6, 19] * t1_2a[13, 10, 11] * t1_2a[15, 3, 1] * t2_2a[24, 3, 2] * t2_2a[22, 7, 8] * t2_1a[12, 11, 16] *
+				t2_1a[5, 4, 18] * Da[37, 15, 14] * Da[38, 23, 24] * Ua[17, 18, 42] * Ua[19, 20, 41] * Ra[13, 14, 40] * Ra[17, 16, 39] * La[43, 23, 22] * La[44, 21, 20] * O[27, 31, 28, 34] * hLa[25, 26, 27] * hRa[30, 29, 28] * vTa[32, 33, 31] *
+				vBa[35, 36, 34] *
+				hLa[37, 38, -1] * hRa[42, 41, -3] * vTa[43, 44, -2] * vBa[40, 39, -4]
 
-			end
 		end
-		println("Contracting is over")
 		return res
 	end
 end
@@ -381,9 +373,9 @@ end
 
 O = 2 .* rand(chi_compression, chi_compression, chi_compression, chi_compression) .- 1;
 
-res = eigsolve(scaling_operator, O, N, :LM; verbosity = verbosity, issymmetric = false, ishermitian = false, krylovdim = krylovdim);
+res = eigsolve(LDO, O, N, :LM; verbosity = verbosity, issymmetric = false, ishermitian = false, krylovdim = krylovdim);
 
-println("SCALING DIMENSIONS FROM THE SCALING OPERATOR FOR chi_compression=$chi_compression:")
+println("SCALING DIMENSIONS FROM THE LDO FOR chi_compression=$chi_compression:")
 
 if path_to_tensor != "none"
 	println("path to tensor: ", path_to_tensor)
@@ -405,7 +397,7 @@ else
 	)
 end
 
-filename = "DSO/" * gilt_pars_identifier(gilt_pars) * "_rotate=($rotate)"
+filename = "LDO/" * gilt_pars_identifier(gilt_pars) * "_rotate=($rotate)"
 
 if path_to_tensor != "none"
 	filename *= ("_path=" * path_to_tensor)

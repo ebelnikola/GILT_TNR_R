@@ -1,7 +1,7 @@
 # GILT-TNR with rotations
 This repository contains the Python3 and Julia codes for the numerical computations in the following papers:
 - [Rotations, Negative Eigenvalues, and Newton Method in Tensor Network Renormalization Group](https://arxiv.org/abs/2408.10312) 
-- [LDO]()
+- [Transfer Matrix and Lattice Dilatation Operator for High-Quality Fixed Points in Tensor Network Renormalization Group]()
 
 Apart from computational packages for Python3 and Julia, our code relies heavily on the following libraries: [GiltTNR](https://github.com/GiltTNR/GiltTNR), [ncon](https://github.com/mhauru/ncon), and [abeliantensors](https://github.com/mhauru/abeliantensors).
 
@@ -41,6 +41,8 @@ jupyter notebook name_of_the_notebook
 Notebooks:
 
 `Newton_method_paper_results_reproduction.ipynb` - reproduces some of the results from [Rotations, Negative Eigenvalues, and Newton Method in Tensor Network Renormalization Group](https://arxiv.org/abs/2408.10312). 
+
+`Lattice_Dilatation_Operator_paper_results_reproduction.ipynb` - reproduces some of the results from [Transfer Matrix and Lattice Dilatation Operator for High-Quality Fixed Points in Tensor Network Renormalization Group]().
 
 ## Scripts 
 
@@ -102,4 +104,3 @@ This directory contains Python code implementing the GiltTNR algorithm (see [thi
 - Resolve warning about AbstractAlgebra.mul!
 - Resolve warnings in initial_tensor function
 - On some computers, sometimes, SVD in TRG step does not converge. That can be fixed by normalizing a tensor before doing SVD. 
-- Replace DSO with LDO everywhere
