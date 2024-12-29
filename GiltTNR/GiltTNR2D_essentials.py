@@ -1,6 +1,7 @@
 from GiltTNR2D_Ising_benchmarks import get_initial_tensor, get_initial_tensor_aniso, get_A_spectrum, get_A_spectrum_flipped, get_A_spectrum_no_norm
 
 import numpy as np
+np.float_ = np.float64 # added by Slava 27.12.2024 to resolve the problem with a newer Numpy option
 import logging
 import itertools as itt
 from ncon import ncon
