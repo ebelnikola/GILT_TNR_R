@@ -59,33 +59,16 @@ function gilt(A, pars)
 end
 
 function gilt(A, list_of_elements, pars; trunc_shape = nothing)
-	println("gilt, A0 shape: ",A.shape)
-	println("gilt, A0 qhape: ",A.qhape)
 	A = ju_to_py(A)
 	A, _ = py"gilttnr_step"(A, 0.0, pars)
-	println("gilt, Apy shape before truncate: ",A.shape)
-	println("gilt, Apy qhape before truncate: ",A.qhape)
 	A, _ = fix_continuous_gauge(A)
 	A = py_to_ju(A)
-	println("gilt, Aju shape before truncate: ",A.shape)
-	println("gilt, Aju qhape before truncate: ",A.qhape)
-	A = ju_to_py(A)
-	println("gilt, Apy shape before truncate: ",A.shape)
-	println("gilt, Apy qhape before truncate: ",A.qhape)
-	A = py_to_ju(A)
-	println("gilt, Aju shape before truncate: ",A.shape)
-	println("gilt, Aju qhape before truncate: ",A.qhape)
 	if !isnothing(trunc_shape)
 		A = truncate_blocks(A, trunc_shape)
 	end
 	A, _ = fix_discrete_gauge(ju_to_py(A), list_of_elements)
 	A /= A.norm()
-	println("gilt, Apy shape: ",A.shape)
-	println("gilt, Apy qhape: ",A.qhape)
 	Aju = py_to_ju(A)
-	println("gilt, trunc_shape: ", trunc_shape)
-	println("gilt, Aju shape: ",Aju.shape)
-	println("gilt, Aju qhape: ",Aju.qhape)
 	return Aju
 end
 
@@ -231,6 +214,86 @@ function newton_correction(A, eigensystem_size_for_jacobian, list_of_elements, g
 	correction = -1.0 * ImJ_inv(x_minus_f)
 	return correction
 end
+
+function newton_correction_with_iterations_fixed(A, eigensystem_size_for_jacobian, list_of_elements, gilt_pars; trunc_shape = nothing)
+
+    # compute eigensystem of jacobian
+
+	A1, _ = py"gilttnr_step"(ju_to_py(A), 0.0, gilt_pars);
+
+	tmp = py"depth_dictionary"
+	println(tmp)
+	flush(stdout)
+
+	recursion_depth = Dict(
+		"S" => tmp[(1, "S")],
+		"N" => tmp[(1, "N")],
+		"E" => tmp[(1, "E")],
+		"W" => tmp[(1, "W")],
+	)
+
+	gilt_pars1 = deepcopy(gilt_pars)
+
+	gilt_pars1["bond_repetitions"] = 2
+	gilt_pars1["recursion_depth"] = recursion_depth
+
+    initial_vector = py_to_ju(random_Z2tens(ju_to_py(A)))
+    eigensystem_init = jacobian_eigsystem(A, eigensystem_size_for_jacobian, list_of_elements, gilt_pars1; trunc_shape = trunc_shape) 
+    println("EIGENVALUES (INITIAL):")
+    for val in eigensystem_init[1]
+        println(val)
+    end  
+
+    if length(eigensystem_init[1]) > eigensystem_size_for_jacobian
+        if conj(eigensystem_init[1][eigensystem_size_for_jacobian]) ≈ eigensystem_init[1][eigensystem_size_for_jacobian+1]
+            approximation_rank = eigensystem_size_for_jacobian + 1
+        else
+            approximation_rank = eigensystem_size_for_jacobian
+        end
+    else
+        approximation_rank = eigensystem_size_for_jacobian
+    end
+
+    eigensystem_init = [eigensystem_init[1][1:approximation_rank], eigensystem_init[2][1:approximation_rank]];
+
+    # compute approxiate jacobian
+
+    jac_approximation_non_orthogonal_basis, non_orthogonal_normalised_basis = build_jacobian_approximation(eigensystem_init[2], eigensystem_init[1]);
+
+    Graham_Schmidt_matrix, orthonormal_basis = build_Graham_Schmidt_matrix(non_orthogonal_normalised_basis);
+
+    jac_approximation = Graham_Schmidt_matrix^(-1) * jac_approximation_non_orthogonal_basis * Graham_Schmidt_matrix;
+
+    ImJ_inv_matrix = (I - jac_approximation)^(-1);
+
+    function project_to_Vs(δA)
+        res = zero(δA)
+        for i in 1:approximation_rank
+            res += orthonormal_basis[i] * dot(orthonormal_basis[i], δA)
+        end
+        return res
+    end
+
+    function ImJ_inv(δA)
+        δA_in_Vs = project_to_Vs(δA)
+        ImJ_inv_δA_in_Vs = zero(δA)
+        δA_out_of_Vs = δA - δA_in_Vs
+        for i ∈ 1:approximation_rank
+            for j ∈ 1:approximation_rank
+                ImJ_inv_δA_in_Vs += ImJ_inv_matrix[i, j] * orthonormal_basis[i] * dot(orthonormal_basis[j], δA)
+            end
+        end
+        return ImJ_inv_δA_in_Vs + δA_out_of_Vs
+    end
+
+    # compute correction and return it
+
+	x_minus_f = A - gilt(A, list_of_elements, gilt_pars1; trunc_shape = trunc_shape)
+	correction = -1.0 * ImJ_inv(x_minus_f)
+	return correction
+end
+
+
 
 
 
