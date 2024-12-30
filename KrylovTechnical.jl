@@ -91,15 +91,31 @@ function extend_blocks_by_zeros(A::Z2Tensor, new_shape)
 	return Z2Tensor(extended_sections, new_shape, A.qhape, A.dirs)
 end
 
+# function written by SR 28.12.2024 - this version of function des not work if qhape is out of order
+# function truncate_blocks(A::Z2Tensor, new_shape)
+# 	truncated_sections = Dict{NTuple{4, Int64}, Array}()
+# 	for (key, block) in A.sects
+# 		kts = leg -> key_to_shape(new_shape, A.qhape, key[leg], leg)
+# 		chi1, chi2, chi3, chi4 = kts(1), kts(2), kts(3), kts(4)
+# 		truncated_sections[key] = block[1:chi1, 1:chi2, 1:chi3, 1:chi4]
+# 	end
+# 	return Z2Tensor(truncated_sections, new_shape, A.qhape, A.dirs)
+# end
+
 # function written by SR 28.12.2024
-function truncate_blocks(A::Z2Tensor, new_shape)
+# updated so that one can pass new_shape assuming qhape = 0 1
+#                                                         0 1
+#                                                         0 1
+#                                                         0 1
+# NE 29.12.24
+function truncate_blocks(A::Z2Tensor, new_shape::Matrix)
 	truncated_sections = Dict{NTuple{4, Int64}, Array}()
 	for (key, block) in A.sects
-		kts = leg -> key_to_shape(new_shape, A.qhape, key[leg], leg)
-		chi1, chi2, chi3, chi4 = kts(1), kts(2), kts(3), kts(4)
+		chi1, chi2, chi3, chi4 = new_shape[1, key[1]+1], new_shape[2, key[2]+1], new_shape[3, key[3]+1], new_shape[4, key[4]+1]
 		truncated_sections[key] = block[1:chi1, 1:chi2, 1:chi3, 1:chi4]
 	end
-	return Z2Tensor(truncated_sections, new_shape, A.qhape, A.dirs)
+	new_qhape = hcat(zeros(Int64, 4), ones(Int64, 4))
+	return Z2Tensor(truncated_sections, new_shape, new_qhape, A.dirs)
 end
 
 function ju_to_py(A)
