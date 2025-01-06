@@ -58,6 +58,20 @@ function gilt(A, pars)
 	return py_to_ju(A)
 end
 
+function gilt_with_cont_gauge(A, pars; trunc_shape = nothing)
+	A = ju_to_py(A)
+	A, _ = py"gilttnr_step"(A, 0.0, pars)
+	A, _ = fix_continuous_gauge(A)
+	A = py_to_ju(A)
+	if !isnothing(trunc_shape)
+		A = truncate_blocks(A, trunc_shape)
+	end
+	A = ju_to_py(A)
+	A /= A.norm()
+	Aju = py_to_ju(A)
+	return Aju
+end
+
 function gilt(A, list_of_elements, pars; trunc_shape = nothing)
 	A = ju_to_py(A)
 	A, _ = py"gilttnr_step"(A, 0.0, pars)
@@ -291,6 +305,17 @@ function newton_correction_with_iterations_fixed(A, eigensystem_size_for_jacobia
 	x_minus_f = A - gilt(A, list_of_elements, gilt_pars1; trunc_shape = trunc_shape)
 	correction = -1.0 * ImJ_inv(x_minus_f)
 	return correction
+end
+
+#SR: this function is still unfinished
+function powell_correction(A, eigensystem_size_for_jacobian, list_of_elements, gilt_pars, trust_region_size; trunc_shape = nothing)
+
+	newton_correction = newton_correction_with_iterations_fixed(A, eigensystem_size_for_jacobian, list_of_elements, gilt_pars; trunc_shape = nothing)
+	
+	if norm(newton_correction) < trust_region_size
+		return newton_correction
+	end
+
 end
 
 
