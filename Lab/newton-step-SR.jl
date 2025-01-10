@@ -226,30 +226,63 @@ function newton_correction(A, eigensystem_size_for_jacobian, list_of_elements, g
 
 	x_minus_f = A - gilt(A, list_of_elements, gilt_pars; trunc_shape = trunc_shape)
 	correction = -1.0 * ImJ_inv(x_minus_f)
+
 	return correction
 end
 
-function newton_correction_with_iterations_fixed(A, eigensystem_size_for_jacobian, list_of_elements, gilt_pars; trunc_shape = nothing)
+function jacobian_linsolve(A, b, list_of_elements, gilt_pars; trunc_shape = nothing, tol = 1e-3)
+	#solves equation (I-\nabla R(A)).x = b
+    function dF(δA)
+		δAnorm = norm(δA)
+		δA /= δAnorm 
+        return δAnorm * (δA - df(x -> gilt(x, list_of_elements, gilt_pars; trunc_shape = trunc_shape), A, δA; stp = 1e-4, order = 2))
+    end
+	
+	initial_vector = py_to_ju(random_Z2tens(ju_to_py(A)))
+
+    x, info = linsolve(dF, b, initial_vector; verbosity = 3, issymmetric = false, ishermitian = false, isposdef = false, krylovdim = 5, maxiter = 20, rtol = tol)
+
+	if info.converged == 0
+		println("WARNING: linsolve did not converge, residual norm=", info.normres)
+	end
+
+    return x
+end
+
+
+function newton_correction_with_iterations_fixed(A, eigensystem_size_for_jacobian, list_of_elements, gilt_pars; trunc_shape = nothing, gmres = false, linsolvetol = 1e-3, recompute_gilt_pars = true, order = 1)
 
     # compute eigensystem of jacobian
 
-	A1, _ = py"gilttnr_step"(ju_to_py(A), 0.0, gilt_pars);
-
-	tmp = py"depth_dictionary"
-	println(tmp)
-	flush(stdout)
-
-	recursion_depth = Dict(
-		"S" => tmp[(1, "S")],
-		"N" => tmp[(1, "N")],
-		"E" => tmp[(1, "E")],
-		"W" => tmp[(1, "W")],
-	)
-
 	gilt_pars1 = deepcopy(gilt_pars)
 
-	gilt_pars1["bond_repetitions"] = 2
-	gilt_pars1["recursion_depth"] = recursion_depth
+	if recompute_gilt_pars
+		A1, _ = py"gilttnr_step"(ju_to_py(A), 0.0, gilt_pars);
+
+		tmp = py"depth_dictionary"
+		println(tmp)
+		flush(stdout)
+
+		recursion_depth = Dict(
+			"S" => tmp[(1, "S")],
+			"N" => tmp[(1, "N")],
+			"E" => tmp[(1, "E")],
+			"W" => tmp[(1, "W")],
+		)
+
+
+		gilt_pars1["bond_repetitions"] = 2
+		gilt_pars1["recursion_depth"] = recursion_depth
+	end
+
+	x_minus_f = A - gilt(A, list_of_elements, gilt_pars1; trunc_shape = trunc_shape)
+
+	if gmres
+		correction_gmres = -1.0 * jacobian_linsolve(A, x_minus_f, list_of_elements, gilt_pars1; trunc_shape = trunc_shape, tol = linsolvetol)
+		return correction_gmres
+	end
+
+	# if gmres == false use approximate Jacobian inverse
 
     initial_vector = py_to_ju(random_Z2tens(ju_to_py(A)))
     eigensystem_init = jacobian_eigsystem(A, eigensystem_size_for_jacobian, list_of_elements, gilt_pars1; trunc_shape = trunc_shape) 
@@ -288,7 +321,7 @@ function newton_correction_with_iterations_fixed(A, eigensystem_size_for_jacobia
         return res
     end
 
-    function ImJ_inv(δA)
+    function ImJ_inv(δA) #this computes (I-Ps nabla R P_s)^{-1}
         δA_in_Vs = project_to_Vs(δA)
         ImJ_inv_δA_in_Vs = zero(δA)
         δA_out_of_Vs = δA - δA_in_Vs
@@ -300,25 +333,170 @@ function newton_correction_with_iterations_fixed(A, eigensystem_size_for_jacobia
         return ImJ_inv_δA_in_Vs + δA_out_of_Vs
     end
 
+	function Im_nabla_R(δA) #this computes Ps nabla R P_s
+        res = zero(δA)
+        for i ∈ 1:approximation_rank
+            for j ∈ 1:approximation_rank
+                res += jac_approximation[i, j] * orthonormal_basis[i] * dot(orthonormal_basis[j], δA)
+            end
+        end
+        return res
+    end
+
+	function nabla_R_rest(δA) #this computes nabla R - Ps nabla R P_s
+        function dgilt(δA)
+			return df(x -> gilt(x, list_of_elements, gilt_pars1; trunc_shape = trunc_shape), A, δA; stp = 1e-4, order = 2)
+		end
+
+        return dgilt(δA) - Im_nabla_R(δA)
+    end
+
+
     # compute correction and return it
 
-	x_minus_f = A - gilt(A, list_of_elements, gilt_pars1; trunc_shape = trunc_shape)
-	correction = -1.0 * ImJ_inv(x_minus_f)
-	return correction
-end
-
-#SR: this function is still unfinished
-function powell_correction(A, eigensystem_size_for_jacobian, list_of_elements, gilt_pars, trust_region_size; trunc_shape = nothing)
-
-	newton_correction = newton_correction_with_iterations_fixed(A, eigensystem_size_for_jacobian, list_of_elements, gilt_pars; trunc_shape = nothing)
+	#x_minus_f = A - gilt(A, list_of_elements, gilt_pars1; trunc_shape = trunc_shape)
 	
-	if norm(newton_correction) < trust_region_size
-		return newton_correction
+	correction1 = ImJ_inv(x_minus_f)
+
+	#println("difference between two Newton step corrections=", norm(correction-correction_gmres))
+
+	if order == 1
+		return -1.0 * correction1
+	end
+
+	correction2 =  ImJ_inv(nabla_R_rest(correction1))
+
+	if order == 2
+		return -1.0 * correction1, -1.0 * correction2
 	end
 
 end
 
+function newton_correction_function(A, eigensystem_size_for_jacobian, list_of_elements, gilt_pars; recompute_gilt_pars = true)
+
+    # compute eigensystem of jacobian
+
+	gilt_pars1 = deepcopy(gilt_pars)
+
+	if recompute_gilt_pars
+		A1, _ = py"gilttnr_step"(ju_to_py(A), 0.0, gilt_pars);
+
+		tmp = py"depth_dictionary"
+		println(tmp)
+		flush(stdout)
+
+		recursion_depth = Dict(
+			"S" => tmp[(1, "S")],
+			"N" => tmp[(1, "N")],
+			"E" => tmp[(1, "E")],
+			"W" => tmp[(1, "W")],
+		)
+
+
+		gilt_pars1["bond_repetitions"] = 2
+		gilt_pars1["recursion_depth"] = recursion_depth
+	end
+
+    initial_vector = py_to_ju(random_Z2tens(ju_to_py(A)))
+    eigensystem_init = jacobian_eigsystem(A, eigensystem_size_for_jacobian, list_of_elements, gilt_pars1; trunc_shape = nothing) 
+    println("EIGENVALUES (INITIAL):")
+    for val in eigensystem_init[1]
+        println(val)
+    end  
+
+    if length(eigensystem_init[1]) > eigensystem_size_for_jacobian
+        if conj(eigensystem_init[1][eigensystem_size_for_jacobian]) ≈ eigensystem_init[1][eigensystem_size_for_jacobian+1]
+            approximation_rank = eigensystem_size_for_jacobian + 1
+        else
+            approximation_rank = eigensystem_size_for_jacobian
+        end
+    else
+        approximation_rank = eigensystem_size_for_jacobian
+    end
+
+	println("approximation rank = ", approximation_rank)
+	
+    eigensystem_init = [eigensystem_init[1][1:approximation_rank], eigensystem_init[2][1:approximation_rank]];
+
+    # compute approxiate jacobian
+
+    jac_approximation_non_orthogonal_basis, non_orthogonal_normalised_basis = build_jacobian_approximation(eigensystem_init[2], eigensystem_init[1]);
+
+    Graham_Schmidt_matrix, orthonormal_basis = build_Graham_Schmidt_matrix(non_orthogonal_normalised_basis);
+
+    jac_approximation = Graham_Schmidt_matrix^(-1) * jac_approximation_non_orthogonal_basis * Graham_Schmidt_matrix;
+
+    ImJ_inv_matrix = (I - jac_approximation)^(-1);
+
+    function project_to_Vs(δA)
+        res = zero(δA)
+        for i in 1:approximation_rank
+            res += orthonormal_basis[i] * dot(orthonormal_basis[i], δA)
+        end
+        return res
+    end
+
+    function ImJ_inv(δA) #this computes (I-Ps nabla R P_s)^{-1}
+        δA_in_Vs = project_to_Vs(δA)
+        ImJ_inv_δA_in_Vs = zero(δA)
+        δA_out_of_Vs = δA - δA_in_Vs
+        for i ∈ 1:approximation_rank
+            for j ∈ 1:approximation_rank
+                ImJ_inv_δA_in_Vs += ImJ_inv_matrix[i, j] * orthonormal_basis[i] * dot(orthonormal_basis[j], δA)
+            end
+        end
+        return ImJ_inv_δA_in_Vs + δA_out_of_Vs
+    end
+
+	return ImJ_inv
+end
 
 
 
+#GRADIENT COMPUTED WRONGLY!!!!
+function gradient_descent(A, list_of_elements, gilt_pars; trunc_shape = nothing)
 
+	A1, _ = py"gilttnr_step"(ju_to_py(A), 0.0, gilt_pars);
+
+	tmp = py"depth_dictionary"
+	println(tmp)
+	flush(stdout)
+
+	recursion_depth = Dict(
+		"S" => tmp[(1, "S")],
+		"N" => tmp[(1, "N")],
+		"E" => tmp[(1, "E")],
+		"W" => tmp[(1, "W")],
+	)
+
+	gilt_pars1 = deepcopy(gilt_pars)
+
+	gilt_pars1["bond_repetitions"] = 2
+	gilt_pars1["recursion_depth"] = recursion_depth
+
+	x_minus_f = A - gilt(A, list_of_elements, gilt_pars1; trunc_shape = trunc_shape)
+
+	function dF(δA)
+		δAnorm = norm(δA)
+		δA /= δAnorm 
+        return δAnorm * (δA - df(x -> gilt(x, list_of_elements, gilt_pars1; trunc_shape = trunc_shape), A, δA; stp = 1e-4, order = 2))
+    end
+
+	gradient = dF(x_minus_f)
+	return gradient, gilt_pars1
+
+end
+
+#GRADIENT COMPUTED WRONGLY!!!! - transposition forgotten
+function gradient_descent_with_iter_fixed(A, list_of_elements, gilt_pars; trunc_shape = nothing)
+
+	function dF(δA)
+		δAnorm = norm(δA)
+		δA /= δAnorm 
+        return δAnorm * (δA - df(x -> gilt(x, list_of_elements, gilt_pars; trunc_shape = trunc_shape), A, δA; stp = 1e-4, order = 2))
+    end
+
+	gradient = dF(x_minus_f)
+	return gradient
+
+end

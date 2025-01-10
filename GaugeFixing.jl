@@ -147,6 +147,7 @@ end
 
 
 function fix_continuous_gauge(A::Array)
+	println("using cont gf with correcting phases")
 	tensors = [A, A]
 
 	environment = Hermitian(environment_for_vertical_gauge(tensors))

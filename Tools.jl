@@ -205,7 +205,7 @@ function handle_the_database(initialA_pars, len::Int64, gilt_pars)
 	end
 end
 
-function trajectory(initialA_pars, len::Int64, gilt_pars)
+function trajectory(initialA_pars, len::Int64, gilt_pars; fix_cont_gauge = false, verbose = false)
 	A_hist, log_fact_hist, errs_hist, existing_length = handle_the_database(initialA_pars, len, gilt_pars)
 	if existing_length >= len
 		return Dict(
@@ -225,9 +225,16 @@ function trajectory(initialA_pars, len::Int64, gilt_pars)
 	redirect_stdio(stdout = out_log) do
 		for i ∈ (existing_length+1):len
 			A, log_fact, errs = py"gilttnr_step"(A_hist[i], log_fact_hist[i], gilt_pars)
+			if fix_cont_gauge == true
+				A,_ = fix_continuous_gauge(A)
+			end
 			push!(A_hist, A)
 			push!(log_fact_hist, log_fact)
 			push!(errs_hist, errs)
+			if verbose
+				println("one more tensor added")
+				flush(stdout)
+			end
 		end
 	end
 
