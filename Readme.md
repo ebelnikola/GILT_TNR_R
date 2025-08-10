@@ -31,7 +31,7 @@ The list of all required packages is provided in the `Manifest.toml` file. Note 
 
 6. To run our interactive notebooks, you may want to install [jupyter notebook](https://jupyter.org/) or the corresponding [extension for VS Code](https://marketplace.visualstudio.com/items?itemName=ms-toolsai.jupyter).     
 
-## Notebooks
+## Notebooks and scripts
 
 Once the installation is done, we invite the user to try our Jupyter notebooks, which allow one to reproduce some of our results easily. To run a notebook, open it either in VS Code (provided that the suitable extension is installed) or using the following command in the terminal (from the root of the repository):
 ```
@@ -42,7 +42,13 @@ Notebooks:
 
 `Newton_method_paper_results_reproduction.ipynb` - reproduces some of the results from [Rotations, Negative Eigenvalues, and Newton Method in Tensor Network Renormalization Group](https://arxiv.org/abs/2408.10312). 
 
-`Lattice_Dilatation_Operator_paper_results_reproduction.ipynb` - reproduces some of the results from [Transfer Matrix and Lattice Dilatation Operator for High-Quality Fixed Points in Tensor Network Renormalization Group]().
+`Lattice_Dilatation_Operator_paper_results_reproduction.ipynb` - reproduces some of the results from [Transfer Matrix and Lattice Dilatation Operator for High-Quality Fixed Points in Tensor Network Renormalization Group](). The TM computations in this notebook are outdated. The last version of the paper uses $r=4$ TM results obtained using the scripts below.
+
+Scripts:
+
+Scripts with name of the form "\*TM_direct(crossed)_\*_r=4.jl" perform the transfer matrix computations for $r=4$ case. Before running the scripts please run `Newton_method_paper_results_reproduction.ipynb` in order to create all the necessary tensors. 
+
+These scripts are not fully automatic. In particular, for "non_rot_alg" scripts, one should ensure that existing trajectory file is typed in the script. By default it is "rotate=false_30_6.0e-6_1.0e-10__relT=1.0000110043212773_len=36.data", but the value of "relT" may potentially slightly change in the last digits from machine to machine.  
 
 ## Scripts 
 
@@ -104,7 +110,6 @@ This directory contains Python code implementing the GiltTNR algorithm (see [thi
 
 ## TODO:
 
-- Add links to the LDO paper
 - Resolve warning about AbstractAlgebra.mul!
 - Resolve warnings in initial_tensor function
 - On some computers, sometimes, SVD in TRG step does not converge. That can be fixed by normalizing a tensor before doing SVD. 
