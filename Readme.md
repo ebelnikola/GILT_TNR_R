@@ -51,7 +51,7 @@ Scripts with names `*_TM_direct(crossed)_*_r=4.jl` perform transfer matrix compu
 Note that these scripts are not fully automatic. For the `non_rot_alg` scripts specifically, two points require attention:
 
 1.  The correct trajectory filename must be manually specified within the script. The default filename is `rotate=false_30_6.0e-6_1.0e-10__relT=1.0000110043212773_len=36.data`, but the `relT` value may vary slightly in its final digits from one machine to another.
-2.  The fixed-point approximation is hardcoded as the 25th tensor along the critical trajectory, which is in agreement with the distance plots from the paper and the `Newton_method_paper_results_reproduction.ipynb` notebook.
+2.  The fixed-point approximation is hardcoded as the 25th tensor along the near critical trajectory, which is in agreement with the distance plots from the paper and the `Newton_method_paper_results_reproduction.ipynb` notebook.
 
 Other scripts should work out of the box.
 
