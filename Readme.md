@@ -46,11 +46,26 @@ Notebooks:
 
 Scripts:
 
-Scripts with name of the form "\*TM_direct(crossed)_\*_r=4.jl" perform the transfer matrix computations for $r=4$ case. Before running the scripts please run `Newton_method_paper_results_reproduction.ipynb` in order to create all the necessary tensors. 
+Scripts with names `*_TM_direct(crossed)_*_r=4.jl` perform transfer matrix computations for the $r=4$ case. Before running these scripts, the `Newton_method_paper_results_reproduction.ipynb` notebook must be run to generate the necessary tensors.
 
-These scripts are not fully automatic. In particular, for "non_rot_alg" scripts, one should ensure that existing trajectory file is typed in the script. By default it is "rotate=false_30_6.0e-6_1.0e-10__relT=1.0000110043212773_len=36.data", but the value of "relT" may potentially slightly change in the last digits from machine to machine.  
+Note that these scripts are not fully automatic. For the `non_rot_alg` scripts specifically, two points require attention:
 
-## Scripts 
+1.  The correct trajectory filename must be manually specified within the script. The default filename is `rotate=false_30_6.0e-6_1.0e-10__relT=1.0000110043212773_len=36.data`, but the `relT` value may vary slightly in its final digits from one machine to another.
+2.  The fixed-point approximation is hardcoded as the 25th tensor along the critical trajectory, which is in agreement with the distance plots from the paper and the `Newton_method_paper_results_reproduction.ipynb` notebook.
+
+Other scripts should work out of the box.
+
+To run these scripts in the background, use the following command:
+```
+nohup julia --project --threads #number_of_threads_here #name_of_the_script_here &
+```
+
+Example:
+```
+nohup julia --project --threads 20 rot_alg_TM_crossed_before_newton_r=4.jl
+```
+
+## Lab 
 
 We provide the following scripts in the Lab directory:
 

@@ -44,7 +44,7 @@ end
 
 vals, vecs = eigsolve(TM_direct_4, randn(30, 30, 30, 30), 50, :LM; krylovdim=60);
 
-serialize("rot_alg_TM_direct_after_newton_r=4.data")
+serialize("rot_alg_TM_direct_after_newton_r=4.data", (vals, vecs))
 
 
 shifted_dimensions = -log.(vals) ./ pi * 2;
