@@ -10,10 +10,9 @@ using TensorOperations
 using KrylovKit
 
 
-
 traj = deserialize("trajectories/rotate=false_30_6.0e-6_1.0e-10__relT=1.0000110043212773_len=36.data");
-
 A = traj["A"][25];
+A = A / A.norm()
 
 gilt_pars = Dict(
     "gilt_eps" => 6e-6,
